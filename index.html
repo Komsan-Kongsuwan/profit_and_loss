@@ -1,0 +1,1025 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profit & Loss Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        body { 
+            margin: 0; 
+            font-family: Arial, sans-serif; 
+            background-color: #0d1b2a; 
+            color: white; 
+        }
+        
+        .layout { 
+            display: flex; 
+            height: 100vh; 
+        }
+        
+        .sidebar { 
+            background: #1b263b; 
+            padding: 15px 5px; 
+            width: 280px; 
+            overflow-y: auto; 
+            transition: width 0.3s ease;
+        }
+        
+        .sidebar.collapsed {
+            width: 0px;
+            padding: 0;
+            overflow: hidden;
+        }
+        
+        .sidebar-header { 
+            font-size: 13px; 
+            font-weight: bold; 
+            color: #ff9800; 
+            margin: 5px 10px; 
+        }
+        
+        .category-section { 
+            margin-bottom: 12px; 
+        }
+        
+        .category-header { 
+            font-size: 11px; 
+            font-weight: bold; 
+            color: #ffc107; 
+            margin: 8px 10px 4px 10px; 
+            padding: 2px 0;
+            border-bottom: 1px solid #495057;
+            text-transform: uppercase;
+        }
+        
+        .category-items { 
+            margin-left: 8px; 
+        }
+        
+        .sidebar-link { 
+            display: block; 
+            padding: 4px 8px; 
+            cursor: pointer; 
+            font-size: 11px; 
+            color: #e9ecef; 
+            border-radius: 3px; 
+            margin: 1px 0;
+            transition: all 0.2s ease;
+        }
+        
+        .sidebar-link:hover { 
+            background: #007bff; 
+            color: white; 
+        }
+        
+        .sidebar-link.active { 
+            background: #007bff; 
+            font-weight: bold; 
+            color: white; 
+        }
+        
+        .toggle-btn {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            z-index: 1000;
+        }
+        
+        .toggle-btn:hover { 
+            background: #0056b3; 
+        }
+        
+        .content { 
+            flex: 1; 
+            padding: 20px; 
+            overflow-y: auto; 
+        }
+        
+        .title {
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: #ff9800;
+        }
+        
+        .grid-container { 
+            display: grid; 
+            grid-template-columns: repeat(7, 1fr); 
+            gap: 15px; 
+            margin-top: 20px; 
+        }
+        
+        .card { 
+            background: #1b263b; 
+            border-radius: 10px; 
+            padding: 10px; 
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3); 
+        }
+        
+        .line-chart { 
+            grid-column: span 4; 
+            height: 350px;
+        }
+        
+        .bar-chart { 
+            grid-column: span 3; 
+            height: 350px;
+        }
+        
+        .card-title { 
+            font-size: 14px; 
+            color: #9eb3c2; 
+            margin-bottom: 5px; 
+        }
+        
+        .metric { 
+            font-size: 16px; 
+            font-weight: bold; 
+            margin-top: 10px; 
+        }
+        
+        .table-container {
+            overflow-x: auto;
+            margin-top: 10px;
+            grid-column: span 7;
+        }
+        
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-family: Arial, sans-serif;
+            background-color: #1b263b;
+            font-size: 11px;
+        }
+        
+        .table-header {
+            background-color: #2c3e50;
+            color: #ecf0f1;
+            padding: 6px 4px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 11px;
+            border: 1px solid #34495e;
+            min-width: 70px;
+        }
+        
+        .table-cell-label {
+            background-color: #34495e;
+            color: #ecf0f1;
+            padding: 6px 8px;
+            font-weight: bold;
+            font-size: 11px;
+            border: 1px solid #4a5f7a;
+            white-space: nowrap;
+        }
+        
+        .table-cell-amount {
+            color: #ecf0f1;
+            padding: 6px 4px;
+            text-align: right;
+            font-size: 11px;
+            border: 1px solid #4a5f7a;
+            min-width: 70px;
+        }
+        
+        .table-cell-diff {
+            padding: 6px 4px;
+            text-align: right;
+            font-size: 11px;
+            font-weight: bold;
+            border: 1px solid #4a5f7a;
+            min-width: 70px;
+        }
+        
+        .table-cell-diff.positive {
+            color: #27ae60;
+        }
+        
+        .table-cell-diff.negative {
+            color: #e74c3c;
+        }
+        
+        .no-data-message {
+            color: #95a5a6;
+            text-align: center;
+            padding: 20px;
+            font-style: italic;
+        }
+        
+        .download-link {
+            display: inline-block;
+            margin-top: 15px;
+            padding: 8px 16px;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            transition: background-color 0.2s ease;
+            cursor: pointer;
+        }
+        
+        .download-link:hover {
+            background-color: #0056b3;
+        }
+
+        .file-upload-section {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #1b263b;
+            border-radius: 10px;
+        }
+
+        .file-upload-label {
+            display: inline-block;
+            padding: 8px 16px;
+            background-color: #28a745;
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: bold;
+            transition: background-color 0.2s ease;
+        }
+
+        .file-upload-label:hover {
+            background-color: #218838;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .file-name {
+            margin-left: 10px;
+            color: #9eb3c2;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="layout">
+        <button class="toggle-btn" id="toggleBtn">☰</button>
+        
+        <div class="sidebar" id="sidebar">
+            <h5 class="sidebar-header">Sites</h5>
+            <div id="sidebarSites" style="overflow-y: auto; margin-top: 10px; max-height: 20vh;"></div>
+            
+            <hr style="margin: 8px 0;">
+            
+            <h5 class="sidebar-header">Item Details</h5>
+            <div id="sidebarItems" style="overflow-y: auto; max-height: 40vh;"></div>
+            
+            <hr style="margin: 8px 0;">
+            
+            <h5 class="sidebar-header">Months</h5>
+            <div id="sidebarPeriods" style="overflow-y: auto; max-height: 20vh;"></div>
+        </div>
+        
+        <div class="content">
+            <div class="file-upload-section">
+                <label for="fileInput" class="file-upload-label">Upload Excel File (profit_and_loss_raw_data.xlsx)</label>
+                <input type="file" id="fileInput" accept=".xlsx,.xls">
+                <span class="file-name" id="fileName">No file selected</span>
+            </div>
+
+            <h4 class="title" id="dashboardTitle">Profit & Loss Dashboard</h4>
+            
+            <div class="grid-container">
+                <div class="card">
+                    <span class="card-title">Revenue Total</span>
+                    <h2 class="metric" id="revenueTotalMetric">-</h2>
+                </div>
+                <div class="card">
+                    <span class="card-title">Variable Cost</span>
+                    <h2 class="metric" id="variableCostMetric">-</h2>
+                </div>
+                <div class="card">
+                    <span class="card-title">Marginal Profit</span>
+                    <h2 class="metric" id="marginalProfitMetric">-</h2>
+                </div>
+                <div class="card">
+                    <span class="card-title">Fix Cost</span>
+                    <h2 class="metric" id="fixCostMetric">-</h2>
+                </div>
+                <div class="card">
+                    <span class="card-title">Gross Profit</span>
+                    <h2 class="metric" id="grossProfitMetric">-</h2>
+                </div>
+                <div class="card">
+                    <span class="card-title">Expense Total</span>
+                    <h2 class="metric" id="expenseTotalMetric">-</h2>
+                </div>
+                <div class="card">
+                    <span class="card-title">Operation Profit</span>
+                    <h2 class="metric" id="operationProfitMetric">-</h2>
+                </div>
+                
+                <div class="card line-chart">
+                    <canvas id="lineChart"></canvas>
+                </div>
+                
+                <div class="card bar-chart">
+                    <canvas id="barChart"></canvas>
+                </div>
+                
+                <div class="table-container card">
+                    <div id="dataTable"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // P&L Categories
+        const PL_CATEGORIES = {
+            "Rev / Cost / Profit": [
+                "Revenue Total",
+                "Variable Cost", 
+                "Marginal Profit",
+                "Fix Cost",
+                "Gross Profit",
+                "Expense Total",
+                "Operating Profit"
+            ],
+            "KPI": [
+                "MP/REV",
+                "GP/REV", 
+                "OP/REV",
+                "DM/REV",
+                "DL/REV",
+                "HC/REV"
+            ],
+            "Variable Cost": [
+                "Subcontractor Cost",
+                "Cost (Adjust)",
+                "Salary",
+                "Over Time",
+                "Bonus",
+                "Social security",
+                "Welfare", 
+                "Provident Fund",
+                "Workmen's compensation",
+                "Severance Pay / Retirement Fee",
+                "Allowance",
+                "Warehouse Supply",
+                "Outsource Labor Fee"
+            ],
+            "Fix Cost": [
+                "Warehouse Rental",
+                "Rental Other",
+                "Rental Equipments",
+                "Repair and Maintenance (Fix Cost)",
+                "Electric&Water Supply",
+                "Depreciation"
+            ],
+            "Expense": [
+                "Conference",
+                "Entertainment", 
+                "Transportation",
+                "Telephone",
+                "Mobile Phone",
+                "Lease Circuit",
+                "Cargo Master",
+                "Office Supply",
+                "Rental Office",
+                "Service Office",
+                "Facility Expense",
+                "Cleaning Expense",
+                "Security",
+                "Insurance",
+                "CLAIM FROM CUSTOMER",
+                "Land & Building TAX",
+                "Signboard Tax",
+                "Repair and Maintenance (Expense)",
+                "Office Equipment",
+                "Staff Amenity",
+                "Personnel Expense",
+                "Expense (Adjust)",
+                "Common expense"
+            ]
+        };
+
+        // KPI calculation configurations
+        const KPI_CONFIGS = {
+            "MP/REV": { numerator: "Marginal Profit", denominator: "Revenue Total" },
+            "GP/REV": { numerator: "Gross Profit", denominator: "Revenue Total" },
+            "OP/REV": { numerator: "Operating Profit", denominator: "Revenue Total" },
+            "DM/REV": { numerator: "Subcontractor Cost", denominator: "Revenue Total" },
+            "DL/REV": { 
+                numerator: ["Salary", "Over Time", "Bonus", "Social security", "Welfare", 
+                           "Provident Fund", "Workmen's compensation", "Severance Pay / Retirement Fee", "Allowance"],
+                denominator: "Revenue Total"
+            },
+            "HC/REV": { numerator: "HC", denominator: "Revenue Total" }
+        };
+
+        // Global state
+        let rawData = [];
+        let sites = [];
+        let items = [];
+        let periods = [];
+        let selectedSite = null;
+        let selectedItem = "Revenue Total";
+        let selectedPeriod = null;
+
+        // Toggle sidebar
+        document.getElementById('toggleBtn').addEventListener('click', function() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('collapsed');
+        });
+
+        // File upload handler
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                document.getElementById('fileName').textContent = file.name;
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, {type: 'array'});
+                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const jsonData = XLSX.utils.sheet_to_json(firstSheet);
+                    
+                    processData(jsonData);
+                };
+                reader.readAsArrayBuffer(file);
+            }
+        });
+
+        function processData(data) {
+            // Filter out Revenue and Cost Total
+            rawData = data.filter(row => 
+                row['Item Detail'] !== 'Revenue' && row['Item Detail'] !== 'Cost Total'
+            );
+
+            // Parse dates
+            rawData.forEach(row => {
+                if (row.Date) {
+                    // Excel dates are serial numbers
+                    const excelDate = row.Date;
+                    if (typeof excelDate === 'number') {
+                        row.DateObj = excelDateToJSDate(excelDate);
+                    } else {
+                        row.DateObj = new Date(excelDate);
+                    }
+                }
+            });
+
+            // Extract unique values
+            sites = [...new Set(rawData.map(row => row.Site).filter(s => s))].sort();
+            items = [...new Set(rawData.map(row => row['Item Detail']).filter(i => i))];
+            periods = [...new Set(rawData.map(row => row.Period).filter(p => p))];
+
+            // Set initial selections
+            selectedSite = sites[0] || null;
+            selectedItem = "Revenue Total";
+            selectedPeriod = periods[0] || null;
+
+            // Build UI
+            buildSidebar();
+            updateDashboard();
+        }
+
+        function excelDateToJSDate(excelDate) {
+            const date = new Date((excelDate - 25569) * 86400 * 1000);
+            return date;
+        }
+
+        function buildSidebar() {
+            // Build Sites
+            const siteContainer = document.getElementById('sidebarSites');
+            siteContainer.innerHTML = '';
+            sites.forEach(site => {
+                const link = document.createElement('div');
+                link.className = 'sidebar-link' + (site === selectedSite ? ' active' : '');
+                link.textContent = site;
+                link.addEventListener('click', () => {
+                    selectedSite = site;
+                    updateDashboard();
+                    updateActiveLinks();
+                });
+                siteContainer.appendChild(link);
+            });
+
+            // Build categorized items
+            const itemContainer = document.getElementById('sidebarItems');
+            itemContainer.innerHTML = '';
+            
+            for (const [category, categoryItems] of Object.entries(PL_CATEGORIES)) {
+                const availableItems = categoryItems.filter(item => items.includes(item));
+                
+                if (availableItems.length > 0) {
+                    const section = document.createElement('div');
+                    section.className = 'category-section';
+                    
+                    const header = document.createElement('h6');
+                    header.className = 'category-header';
+                    header.textContent = category;
+                    section.appendChild(header);
+                    
+                    const itemsDiv = document.createElement('div');
+                    itemsDiv.className = 'category-items';
+                    
+                    availableItems.forEach(item => {
+                        const link = document.createElement('div');
+                        link.className = 'sidebar-link' + (item === selectedItem ? ' active' : '');
+                        link.textContent = item;
+                        link.addEventListener('click', () => {
+                            selectedItem = item;
+                            updateDashboard();
+                            updateActiveLinks();
+                        });
+                        itemsDiv.appendChild(link);
+                    });
+                    
+                    section.appendChild(itemsDiv);
+                    itemContainer.appendChild(section);
+                }
+            }
+
+            // Add other items not in categories
+            const allCategorized = Object.values(PL_CATEGORIES).flat();
+            const otherItems = items.filter(item => !allCategorized.includes(item));
+            
+            if (otherItems.length > 0) {
+                const section = document.createElement('div');
+                section.className = 'category-section';
+                
+                const header = document.createElement('h6');
+                header.className = 'category-header';
+                header.textContent = 'Other Items';
+                section.appendChild(header);
+                
+                const itemsDiv = document.createElement('div');
+                itemsDiv.className = 'category-items';
+                
+                otherItems.forEach(item => {
+                    const link = document.createElement('div');
+                    link.className = 'sidebar-link' + (item === selectedItem ? ' active' : '');
+                    link.textContent = item;
+                    link.addEventListener('click', () => {
+                        selectedItem = item;
+                        updateDashboard();
+                        updateActiveLinks();
+                    });
+                    itemsDiv.appendChild(link);
+                });
+                
+                section.appendChild(itemsDiv);
+                itemContainer.appendChild(section);
+            }
+
+            // Build Periods
+            const periodContainer = document.getElementById('sidebarPeriods');
+            periodContainer.innerHTML = '';
+            periods.forEach(period => {
+                const link = document.createElement('div');
+                link.className = 'sidebar-link' + (period === selectedPeriod ? ' active' : '');
+                link.textContent = period;
+                link.addEventListener('click', () => {
+                    selectedPeriod = period;
+                    updateDashboard();
+                    updateActiveLinks();
+                });
+                periodContainer.appendChild(link);
+            });
+        }
+
+        function updateActiveLinks() {
+            document.querySelectorAll('.sidebar-link').forEach(link => {
+                link.classList.remove('active');
+            });
+            
+            document.querySelectorAll('.sidebar-link').forEach(link => {
+                if (link.textContent === selectedSite || 
+                    link.textContent === selectedItem || 
+                    link.textContent === selectedPeriod) {
+                    link.classList.add('active');
+                }
+            });
+        }
+
+        function updateDashboard() {
+            if (!selectedSite || !selectedItem || !selectedPeriod) return;
+
+            // Update title
+            document.getElementById('dashboardTitle').textContent = 
+                `${selectedSite} - ${selectedItem} - ${selectedPeriod}`;
+
+            // Calculate metrics
+            calculateMetrics();
+
+            // Update charts
+            updateCharts();
+
+            // Update table
+            updateTable();
+        }
+
+        function formatNumber(num) {
+            if (num === null || num === undefined || isNaN(num)) return '-';
+            return num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        function calculateMetrics() {
+            const siteData = rawData.filter(row => 
+                row.Site === selectedSite && row.Period === selectedPeriod
+            );
+
+            const metrics = {
+                "Revenue Total": 0,
+                "Variable Cost": 0,
+                "Marginal Profit": 0,
+                "Fix Cost": 0,
+                "Gross Profit": 0,
+                "Expense Total": 0,
+                "Operating Profit": 0
+            };
+
+            for (const [key, value] of Object.entries(metrics)) {
+                const data = siteData.filter(row => row['Item Detail'] === key);
+                metrics[key] = data.reduce((sum, row) => sum + (row.Amount || 0), 0);
+            }
+
+            document.getElementById('revenueTotalMetric').textContent = formatNumber(metrics["Revenue Total"]);
+            document.getElementById('variableCostMetric').textContent = formatNumber(metrics["Variable Cost"]);
+            document.getElementById('marginalProfitMetric').textContent = formatNumber(metrics["Marginal Profit"]);
+            document.getElementById('fixCostMetric').textContent = formatNumber(metrics["Fix Cost"]);
+            document.getElementById('grossProfitMetric').textContent = formatNumber(metrics["Gross Profit"]);
+            document.getElementById('expenseTotalMetric').textContent = formatNumber(metrics["Expense Total"]);
+            document.getElementById('operationProfitMetric').textContent = formatNumber(metrics["Operating Profit"]);
+        }
+
+        // Chart.js instances
+        let lineChartInstance = null;
+        let barChartInstance = null;
+
+        function updateCharts() {
+            const siteData = rawData.filter(row => row.Site === selectedSite);
+            const isKPI = KPI_CONFIGS.hasOwnProperty(selectedItem);
+            const isHCRev = selectedItem === "HC/REV";
+
+            // Prepare line chart data
+            let lineData;
+            if (isKPI) {
+                lineData = calculateKPIData(siteData, selectedItem);
+            } else {
+                lineData = siteData
+                    .filter(row => row['Item Detail'] === selectedItem)
+                    .map(row => ({
+                        date: row.DateObj,
+                        amount: row.Amount || 0
+                    }))
+                    .sort((a, b) => a.date - b.date);
+            }
+
+            // Destroy existing line chart
+            if (lineChartInstance) {
+                lineChartInstance.destroy();
+            }
+
+            // Create line chart with Chart.js
+            const lineCtx = document.getElementById('lineChart').getContext('2d');
+            lineChartInstance = new Chart(lineCtx, {
+                type: 'line',
+                data: {
+                    labels: lineData.map(d => d.date.toLocaleDateString()),
+                    datasets: [{
+                        label: selectedItem,
+                        data: lineData.map(d => d.amount),
+                        borderColor: '#29b6f6',
+                        backgroundColor: 'rgba(41, 182, 246, 0.1)',
+                        borderWidth: 2,
+                        tension: 0.1,
+                        pointRadius: 3,
+                        pointBackgroundColor: '#29b6f6'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: `${selectedItem} Over Time`,
+                            color: '#ff9800',
+                            font: {
+                                size: 16,
+                                family: 'Arial'
+                            }
+                        },
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: {
+                                color: 'white',
+                                maxRotation: 45,
+                                minRotation: 45
+                            },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            }
+                        },
+                        y: {
+                            ticks: {
+                                color: 'white',
+                                callback: function(value) {
+                                    if (isKPI) {
+                                        return value.toFixed(2) + '%';
+                                    } else if (isHCRev) {
+                                        return value.toFixed(2);
+                                    }
+                                    return value.toLocaleString();
+                                }
+                            },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Prepare bar chart data (yearly)
+            let barData;
+            if (isKPI) {
+                barData = calculateKPIYearlyData(siteData, selectedItem);
+            } else {
+                const yearlyData = {};
+                lineData.forEach(d => {
+                    const year = d.date.getFullYear();
+                    if (!yearlyData[year]) yearlyData[year] = [];
+                    yearlyData[year].push(d.amount);
+                });
+
+                barData = Object.keys(yearlyData).map(year => ({
+                    year: parseInt(year),
+                    amount: yearlyData[year].reduce((sum, val) => sum + val, 0)
+                })).sort((a, b) => a.year - b.year);
+            }
+
+            // Destroy existing bar chart
+            if (barChartInstance) {
+                barChartInstance.destroy();
+            }
+
+            // Create bar chart with Chart.js
+            const barCtx = document.getElementById('barChart').getContext('2d');
+            barChartInstance = new Chart(barCtx, {
+                type: 'bar',
+                data: {
+                    labels: barData.map(d => d.year),
+                    datasets: [{
+                        label: selectedItem,
+                        data: barData.map(d => d.amount),
+                        backgroundColor: '#29b6f6',
+                        borderColor: '#29b6f6',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: `${selectedItem} by Year`,
+                            color: '#ff9800',
+                            font: {
+                                size: 16,
+                                family: 'Arial'
+                            }
+                        },
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: {
+                                color: 'white'
+                            },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            }
+                        },
+                        y: {
+                            ticks: {
+                                color: 'white',
+                                callback: function(value) {
+                                    if (isKPI) {
+                                        return value.toFixed(2) + '%';
+                                    } else if (isHCRev) {
+                                        return value.toFixed(2);
+                                    }
+                                    return value.toLocaleString();
+                                }
+                            },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function calculateKPIData(siteData, kpiName) {
+            const config = KPI_CONFIGS[kpiName];
+            const result = [];
+
+            // Group by date
+            const dateGroups = {};
+            siteData.forEach(row => {
+                const dateKey = row.DateObj.toISOString().split('T')[0];
+                if (!dateGroups[dateKey]) {
+                    dateGroups[dateKey] = { date: row.DateObj, rows: [] };
+                }
+                dateGroups[dateKey].rows.push(row);
+            });
+
+            for (const [dateKey, group] of Object.entries(dateGroups)) {
+                let numeratorSum = 0;
+                let denominatorSum = 0;
+
+                if (Array.isArray(config.numerator)) {
+                    numeratorSum = group.rows
+                        .filter(row => config.numerator.includes(row['Item Detail']))
+                        .reduce((sum, row) => sum + (row.Amount || 0), 0);
+                } else {
+                    numeratorSum = group.rows
+                        .filter(row => row['Item Detail'] === config.numerator)
+                        .reduce((sum, row) => sum + (row.Amount || 0), 0);
+                }
+
+                denominatorSum = group.rows
+                    .filter(row => row['Item Detail'] === config.denominator)
+                    .reduce((sum, row) => sum + (row.Amount || 0), 0);
+
+                const percentage = denominatorSum > 0 ? (numeratorSum / denominatorSum * 100) : 0;
+                result.push({ date: group.date, amount: percentage });
+            }
+
+            return result.sort((a, b) => a.date - b.date);
+        }
+
+        function calculateKPIYearlyData(siteData, kpiName) {
+            const config = KPI_CONFIGS[kpiName];
+            const result = [];
+
+            // Group by year
+            const yearGroups = {};
+            siteData.forEach(row => {
+                const year = row.DateObj.getFullYear();
+                if (!yearGroups[year]) {
+                    yearGroups[year] = [];
+                }
+                yearGroups[year].push(row);
+            });
+
+            for (const [year, rows] of Object.entries(yearGroups)) {
+                let numeratorSum = 0;
+                let denominatorSum = 0;
+
+                if (Array.isArray(config.numerator)) {
+                    numeratorSum = rows
+                        .filter(row => config.numerator.includes(row['Item Detail']))
+                        .reduce((sum, row) => sum + (row.Amount || 0), 0);
+                } else {
+                    numeratorSum = rows
+                        .filter(row => row['Item Detail'] === config.numerator)
+                        .reduce((sum, row) => sum + (row.Amount || 0), 0);
+                }
+
+                denominatorSum = rows
+                    .filter(row => row['Item Detail'] === config.denominator)
+                    .reduce((sum, row) => sum + (row.Amount || 0), 0);
+
+                const percentage = denominatorSum > 0 ? (numeratorSum / denominatorSum * 100) : 0;
+                result.push({ year: parseInt(year), amount: percentage });
+            }
+
+            return result.sort((a, b) => a.year - b.year);
+        }
+
+        function updateTable() {
+            const tableContainer = document.getElementById('dataTable');
+            
+            // Get all periods sorted
+            const allPeriods = [...new Set(rawData.map(row => row.Period))].sort();
+            const siteData = rawData.filter(row => row.Site === selectedSite);
+
+            if (allPeriods.length === 0) {
+                tableContainer.innerHTML = '<div class="no-data-message">No data available</div>';
+                return;
+            }
+
+            // Build table
+            let tableHTML = '<table class="data-table"><thead><tr>';
+            tableHTML += '<th class="table-header">Period</th>';
+            
+            allPeriods.forEach(period => {
+                tableHTML += `<th class="table-header">${period}</th>`;
+            });
+            tableHTML += '<th class="table-header">Change</th>';
+            tableHTML += '</tr></thead><tbody>';
+
+            // Get ordered items
+            const orderedItems = getOrderedItems();
+
+            orderedItems.forEach(item => {
+                tableHTML += '<tr>';
+                tableHTML += `<td class="table-cell-label">${item}</td>`;
+
+                const amounts = [];
+                allPeriods.forEach(period => {
+                    const isKPI = KPI_CONFIGS.hasOwnProperty(item);
+                    let amount;
+
+                    if (isKPI) {
+                        const config = KPI_CONFIGS[item];
+                        const periodData = siteData.filter(row => row.Period === period);
+
+                        let numeratorSum = 0;
+                        let denominatorSum = 0;
+
+                        if (Array.isArray(config.numerator)) {
+                            numeratorSum = periodData
+                                .filter(row => config.numerator.includes(row['Item Detail']))
+                                .reduce((sum, row) => sum + (row.Amount || 0), 0);
+                        } else {
+                            numeratorSum = periodData
+                                .filter(row => row['Item Detail'] === config.numerator)
+                                .reduce((sum, row) => sum + (row.Amount || 0), 0);
+                        }
+
+                        denominatorSum = periodData
+                            .filter(row => row['Item Detail'] === config.denominator)
+                            .reduce((sum, row) => sum + (row.Amount || 0), 0);
+
+                        amount = denominatorSum > 0 ? (numeratorSum / denominatorSum * 100) : 0;
+                    } else {
+                        amount = siteData
+                            .filter(row => row['Item Detail'] === item && row.Period === period)
+                            .reduce((sum, row) => sum + (row.Amount || 0), 0);
+                    }
+
+                    amounts.push(amount);
+                    const displayValue = isKPI ? `${amount.toFixed(2)}%` : formatNumber(amount);
+                    tableHTML += `<td class="table-cell-amount">${displayValue}</td>`;
+                });
+
+                // Calculate change
+                const firstAmount = amounts[0] || 0;
+                const lastAmount = amounts[amounts.length - 1] || 0;
+                const change = lastAmount - firstAmount;
+                const changeClass = change >= 0 ? 'positive' : 'negative';
+                const changeSymbol = change >= 0 ? '+' : '';
+                tableHTML += `<td class="table-cell-diff ${changeClass}">${changeSymbol}${formatNumber(change)}</td>`;
+
+                tableHTML += '</tr>';
+            });
+
+            tableHTML += '</tbody></table>';
+            tableContainer.innerHTML = tableHTML;
+        }
+
+        function getOrderedItems() {
+            const ordered = [];
+            for (const [category, categoryItems] of Object.entries(PL_CATEGORIES)) {
+                categoryItems.forEach(item => {
+                    if (items.includes(item)) {
+                        ordered.push(item);
+                    }
+                });
+            }
+
+            const allCategorized = Object.values(PL_CATEGORIES).flat();
+            items.forEach(item => {
+                if (!allCategorized.includes(item)) {
+                    ordered.push(item);
+                }
+            });
+
+            return ordered;
+        }
+
+        // Initialize with sample message
+        document.getElementById('dataTable').innerHTML = 
+            '<div class="no-data-message">Please upload the Excel file to view the dashboard</div>';
+    </script>
+</body>
+</html>
