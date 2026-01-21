@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Profit & Loss Dashboard</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         body { 
@@ -23,8 +24,11 @@
             background: #1b263b; 
             padding: 15px 5px; 
             width: 280px; 
-            overflow-y: auto; 
+            overflow-y: hidden;
             transition: width 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
         }
         
         .sidebar.collapsed {
@@ -82,20 +86,28 @@
         
         .toggle-btn {
             position: absolute;
-            top: 10px;
-            left: 10px;
+            top: 50%;
+            left: 280px;
+            transform: translateY(-50%);
+            writing-mode: vertical-rl;
+            text-orientation: mixed;
             background: #007bff;
             color: white;
             border: none;
-            padding: 8px 12px;
-            border-radius: 4px;
+            padding: 12px 8px;
+            border-radius: 0 8px 8px 0;
             cursor: pointer;
-            font-size: 14px;
+            font-size: 11px;
             z-index: 1000;
+            transition: left 0.3s ease;
         }
         
         .toggle-btn:hover { 
             background: #0056b3; 
+        }
+        
+        .toggle-btn.collapsed {
+            left: 0px;
         }
         
         .content { 
@@ -106,6 +118,7 @@
         
         .title {
             font-size: 24px;
+            margin-top: 15px;
             margin-bottom: 20px;
             color: #ff9800;
         }
@@ -134,121 +147,81 @@
             height: 350px;
         }
         
+        .sites-chart {
+            grid-column: span 7;
+            height: 350px;
+        }
+        
+        .trend-chart-container {
+            grid-column: span 7;
+            height: 525px;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .trend-chart-title {
+            text-align: center;
+            color: #ff9800;
+            font-size: 16px;
+            font-weight: normal;
+            margin: 0 0 10px 0;
+            padding: 5px 0;
+        }
+        
+        .trend-chart-scroll {
+            flex: 1;
+            overflow-x: auto;
+            overflow-y: hidden;
+        }
+        
+        .trend-chart-wrapper {
+            height: 100%;
+            min-width: 100%;
+        }
+        
+        #trendChart {
+            height: 100%;
+        }
+        
         .card-title { 
             font-size: 14px; 
             color: #9eb3c2; 
-            margin-bottom: 5px; 
+            margin-bottom: 5px;
+            display: block;
+        }
+        
+        .card-date {
+            font-size: 12px;
+            color: #ff9800;
+            margin-bottom: 8px;
+            display: block;
         }
         
         .metric { 
-            font-size: 16px; 
+            font-size: 20px; 
             font-weight: bold; 
-            margin-top: 10px; 
+            margin-top: 5px; 
         }
         
-        .table-container {
-            overflow-x: auto;
-            margin-top: 10px;
-            grid-column: span 7;
-        }
-        
-        .data-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-family: Arial, sans-serif;
-            background-color: #1b263b;
-            font-size: 11px;
-        }
-        
-        .table-header {
-            background-color: #2c3e50;
-            color: #ecf0f1;
-            padding: 6px 4px;
-            text-align: center;
-            font-weight: bold;
-            font-size: 11px;
-            border: 1px solid #34495e;
-            min-width: 70px;
-        }
-        
-        .table-cell-label {
-            background-color: #34495e;
-            color: #ecf0f1;
-            padding: 6px 8px;
-            font-weight: bold;
-            font-size: 11px;
-            border: 1px solid #4a5f7a;
-            white-space: nowrap;
-        }
-        
-        .table-cell-amount {
-            color: #ecf0f1;
-            padding: 6px 4px;
-            text-align: right;
-            font-size: 11px;
-            border: 1px solid #4a5f7a;
-            min-width: 70px;
-        }
-        
-        .table-cell-diff {
-            padding: 6px 4px;
-            text-align: right;
-            font-size: 11px;
-            font-weight: bold;
-            border: 1px solid #4a5f7a;
-            min-width: 70px;
-        }
-        
-        .table-cell-diff.positive {
-            color: #27ae60;
-        }
-        
-        .table-cell-diff.negative {
-            color: #e74c3c;
-        }
-        
-        .no-data-message {
-            color: #95a5a6;
-            text-align: center;
-            padding: 20px;
-            font-style: italic;
-        }
-        
-        .download-link {
-            display: inline-block;
-            margin-top: 15px;
-            padding: 8px 16px;
-            background-color: #007bff;
-            color: white;
-            text-decoration: none;
-            border-radius: 4px;
-            font-size: 12px;
-            font-weight: bold;
-            transition: background-color 0.2s ease;
-            cursor: pointer;
-        }
-        
-        .download-link:hover {
-            background-color: #0056b3;
-        }
-
         .file-upload-section {
-            margin-bottom: 20px;
-            padding: 15px;
-            background: #1b263b;
-            border-radius: 10px;
+            margin-bottom: 10px;
+            padding: 10px;
+            background: #2c3e50;
+            border-radius: 5px;
         }
 
         .file-upload-label {
-            display: inline-block;
-            padding: 8px 16px;
+            display: block;
+            padding: 6px 12px;
             background-color: #28a745;
             color: white;
             border-radius: 4px;
             cursor: pointer;
-            font-size: 12px;
+            font-size: 11px;
             font-weight: bold;
             transition: background-color 0.2s ease;
+            text-align: center;
         }
 
         .file-upload-label:hover {
@@ -260,67 +233,78 @@
         }
 
         .file-name {
-            margin-left: 10px;
+            display: block;
+            margin-top: 5px;
             color: #9eb3c2;
-            font-size: 12px;
+            font-size: 10px;
+            text-align: center;
         }
     </style>
 </head>
 <body>
     <div class="layout">
-        <button class="toggle-btn" id="toggleBtn">☰</button>
+        <button class="toggle-btn" id="toggleBtn">HIDE</button>
         
         <div class="sidebar" id="sidebar">
+            <div class="file-upload-section">
+                <label for="fileInput" class="file-upload-label">Upload Excel</label>
+                <input type="file" id="fileInput" accept=".xlsx,.xls">
+                <div class="file-name" id="fileName">Auto-loaded</div>
+            </div>
+            
+            <hr style="margin: 8px 0;">
+            
             <h5 class="sidebar-header">Sites</h5>
-            <div id="sidebarSites" style="overflow-y: auto; margin-top: 10px; max-height: 20vh;"></div>
+            <div id="sidebarSites" style="overflow-y: auto; margin-top: 10px; flex: 0 0 15vh;"></div>
             
             <hr style="margin: 8px 0;">
             
             <h5 class="sidebar-header">Item Details</h5>
-            <div id="sidebarItems" style="overflow-y: auto; max-height: 40vh;"></div>
+            <div id="sidebarItems" style="overflow-y: auto; flex: 1 1 auto; min-height: 0;"></div>
             
             <hr style="margin: 8px 0;">
             
             <h5 class="sidebar-header">Months</h5>
-            <div id="sidebarPeriods" style="overflow-y: auto; max-height: 20vh;"></div>
+            <div id="sidebarPeriods" style="overflow-y: auto; flex: 0 0 15vh;"></div>
         </div>
         
         <div class="content">
-            <div class="file-upload-section">
-                <label for="fileInput" class="file-upload-label">Upload Different Excel File (Optional)</label>
-                <input type="file" id="fileInput" accept=".xlsx,.xls">
-                <span class="file-name" id="fileName">Initial data will load automatically</span>
-            </div>
-
             <h4 class="title" id="dashboardTitle">Profit & Loss Dashboard</h4>
             
             <div class="grid-container">
                 <div class="card">
                     <span class="card-title">Revenue Total</span>
+                    <span class="card-date" id="revenueTotalDate">-</span>
                     <h2 class="metric" id="revenueTotalMetric">-</h2>
                 </div>
                 <div class="card">
                     <span class="card-title">Variable Cost</span>
+                    <span class="card-date" id="variableCostDate">-</span>
                     <h2 class="metric" id="variableCostMetric">-</h2>
                 </div>
                 <div class="card">
                     <span class="card-title">Marginal Profit</span>
+                    <span class="card-date" id="marginalProfitDate">-</span>
                     <h2 class="metric" id="marginalProfitMetric">-</h2>
                 </div>
                 <div class="card">
                     <span class="card-title">Fix Cost</span>
+                    <span class="card-date" id="fixCostDate">-</span>
                     <h2 class="metric" id="fixCostMetric">-</h2>
                 </div>
                 <div class="card">
                     <span class="card-title">Gross Profit</span>
+                    <span class="card-date" id="grossProfitDate">-</span>
                     <h2 class="metric" id="grossProfitMetric">-</h2>
                 </div>
                 <div class="card">
                     <span class="card-title">Expense Total</span>
+                    <span class="card-date" id="expenseTotalDate">-</span>
                     <h2 class="metric" id="expenseTotalMetric">-</h2>
                 </div>
                 <div class="card">
                     <span class="card-title">Operation Profit</span>
+                    <span class="card-date" id="operationProfitDate">-</span>
                     <h2 class="metric" id="operationProfitMetric">-</h2>
                 </div>
                 
@@ -332,8 +316,17 @@
                     <canvas id="barChart"></canvas>
                 </div>
                 
-                <div class="table-container card">
-                    <div id="dataTable"></div>
+                <div class="card sites-chart">
+                    <canvas id="sitesChart"></canvas>
+                </div>
+                
+                <div class="card trend-chart-container">
+                    <h4 class="trend-chart-title" id="trendChartTitle">Monthly Change Trend</h4>
+                    <div class="trend-chart-scroll">
+                        <div class="trend-chart-wrapper" id="trendChartWrapper">
+                            <canvas id="trendChart"></canvas>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -441,7 +434,16 @@
         // Toggle sidebar
         document.getElementById('toggleBtn').addEventListener('click', function() {
             const sidebar = document.getElementById('sidebar');
+            const toggleBtn = document.getElementById('toggleBtn');
             sidebar.classList.toggle('collapsed');
+            toggleBtn.classList.toggle('collapsed');
+            
+            // Switch button text
+            if (sidebar.classList.contains('collapsed')) {
+                toggleBtn.textContent = 'UNHIDE';
+            } else {
+                toggleBtn.textContent = 'HIDE';
+            }
         });
 
         // File upload handler
@@ -619,17 +621,19 @@
             if (!selectedSite || !selectedItem || !selectedPeriod) return;
 
             // Update title
-            document.getElementById('dashboardTitle').textContent = 
-                `${selectedSite} - ${selectedItem} - ${selectedPeriod}`;
+            document.getElementById('dashboardTitle').textContent = 'Profit and Loss Analysis';
 
             // Calculate metrics
             calculateMetrics();
 
             // Update charts
             updateCharts();
-
-            // Update table
-            updateTable();
+            
+            // Update trend chart title
+            const trendTitle = document.getElementById('trendChartTitle');
+            if (trendTitle) {
+                trendTitle.textContent = `${selectedSite} - ${selectedItem} - Monthly Change Trend`;
+            }
         }
 
         function formatNumber(num) {
@@ -657,6 +661,27 @@
                 metrics[key] = data.reduce((sum, row) => sum + (row.Amount || 0), 0);
             }
 
+            // Format date as "Jan-2020"
+            const dateParts = selectedPeriod.split('-');
+            let formattedDate = selectedPeriod;
+            if (dateParts.length === 2) {
+                const month = parseInt(dateParts[0]);
+                const year = dateParts[1];
+                const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                formattedDate = `${monthNames[month - 1]}-${year}`;
+            }
+
+            // Update card dates
+            const siteAndDate = `${selectedSite} (${formattedDate})`;
+            document.getElementById('revenueTotalDate').textContent = siteAndDate;
+            document.getElementById('variableCostDate').textContent = siteAndDate;
+            document.getElementById('marginalProfitDate').textContent = siteAndDate;
+            document.getElementById('fixCostDate').textContent = siteAndDate;
+            document.getElementById('grossProfitDate').textContent = siteAndDate;
+            document.getElementById('expenseTotalDate').textContent = siteAndDate;
+            document.getElementById('operationProfitDate').textContent = siteAndDate;
+
+            // Update metric values
             document.getElementById('revenueTotalMetric').textContent = formatNumber(metrics["Revenue Total"]);
             document.getElementById('variableCostMetric').textContent = formatNumber(metrics["Variable Cost"]);
             document.getElementById('marginalProfitMetric').textContent = formatNumber(metrics["Marginal Profit"]);
@@ -669,6 +694,42 @@
         // Chart.js instances
         let lineChartInstance = null;
         let barChartInstance = null;
+        let sitesChartInstance = null;
+        let trendChartInstance = null;
+        let trendLabelMode = 'value'; // Start with 'value', then 'change', then 'percentage'
+
+        // Register datalabels plugin
+        Chart.register(ChartDataLabels);
+
+        // Disable datalabels plugin by default (only use in trend chart)
+        Chart.defaults.set('plugins.datalabels', {
+            display: false
+        });
+
+        // Crosshair plugin for vertical hover line
+        const crosshairPlugin = {
+            id: 'crosshair',
+            afterDraw: (chart) => {
+                if (chart.tooltip?._active?.length) {
+                    const ctx = chart.ctx;
+                    const activePoint = chart.tooltip._active[0];
+                    const x = activePoint.element.x;
+                    const topY = chart.scales.y.top;
+                    const bottomY = chart.scales.y.bottom;
+
+                    // Draw vertical line
+                    ctx.save();
+                    ctx.beginPath();
+                    ctx.moveTo(x, topY);
+                    ctx.lineTo(x, bottomY);
+                    ctx.lineWidth = 1;
+                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+                    ctx.setLineDash([5, 5]);
+                    ctx.stroke();
+                    ctx.restore();
+                }
+            }
+        };
 
         function updateCharts() {
             const siteData = rawData.filter(row => row.Site === selectedSite);
@@ -707,17 +768,23 @@
                         backgroundColor: 'rgba(41, 182, 246, 0.1)',
                         borderWidth: 2,
                         tension: 0.1,
-                        pointRadius: 3,
-                        pointBackgroundColor: '#29b6f6'
+                        pointRadius: 0,
+                        pointHoverRadius: 5,
+                        pointBackgroundColor: '#29b6f6',
+                        pointHoverBackgroundColor: '#29b6f6'
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false
+                    },
                     plugins: {
                         title: {
                             display: true,
-                            text: `${selectedItem} Over Time`,
+                            text: `${selectedSite} - ${selectedItem} by Month`,
                             color: '#ff9800',
                             font: {
                                 size: 16,
@@ -726,17 +793,67 @@
                         },
                         legend: {
                             display: false
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false
+                        },
+                        datalabels: {
+                            display: function(context) {
+                                // Only show label for first month of each year (January)
+                                const date = lineData[context.dataIndex].date;
+                                return date.getMonth() === 0; // January = 0
+                            },
+                            anchor: 'end',
+                            align: 'top',
+                            offset: 5,
+                            color: 'white',
+                            font: {
+                                size: 10,
+                                weight: 'bold',
+                                family: 'Arial'
+                            },
+                            formatter: function(value, context) {
+                                if (isKPI) {
+                                    return value.toFixed(1) + '%';
+                                } else if (isHCRev) {
+                                    return value.toFixed(1);
+                                }
+                                
+                                const absValue = Math.abs(value);
+                                const sign = value >= 0 ? '' : '-';
+                                
+                                if (absValue >= 1000000) {
+                                    return sign + (absValue / 1000000).toFixed(1) + 'MB';
+                                } else if (absValue >= 1000) {
+                                    return sign + (absValue / 1000).toFixed(0) + 'KB';
+                                } else {
+                                    return sign + Math.round(absValue) + 'B';
+                                }
+                            }
                         }
                     },
                     scales: {
                         x: {
                             ticks: {
                                 color: 'white',
-                                maxRotation: 45,
-                                minRotation: 45
+                                maxRotation: 0,
+                                minRotation: 0,
+                                callback: function(value, index) {
+                                    const date = lineData[index].date;
+                                    return date.getFullYear();
+                                },
+                                autoSkip: true,
+                                maxTicksLimit: 10
                             },
                             grid: {
-                                color: 'rgba(255, 255, 255, 0.1)'
+                                color: 'rgba(255, 255, 255, 0.1)',
+                                drawTicks: false,
+                                lineWidth: 1
+                            },
+                            border: {
+                                color: 'rgba(255, 255, 255, 0.3)',
+                                width: 1
                             }
                         },
                         y: {
@@ -752,11 +869,18 @@
                                 }
                             },
                             grid: {
-                                color: 'rgba(255, 255, 255, 0.1)'
+                                color: 'rgba(255, 255, 255, 0.2)',
+                                drawTicks: false,
+                                lineWidth: 1
+                            },
+                            border: {
+                                color: 'white',
+                                width: 1
                             }
                         }
                     }
-                }
+                },
+                plugins: [crosshairPlugin]
             });
 
             // Prepare bar chart data (yearly)
@@ -792,17 +916,21 @@
                         label: selectedItem,
                         data: barData.map(d => d.amount),
                         backgroundColor: '#29b6f6',
-                        borderColor: '#29b6f6',
+                        borderColor: 'white',
                         borderWidth: 1
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false
+                    },
                     plugins: {
                         title: {
                             display: true,
-                            text: `${selectedItem} by Year`,
+                            text: `${selectedSite} - ${selectedItem} by Year`,
                             color: '#ff9800',
                             font: {
                                 size: 16,
@@ -811,6 +939,35 @@
                         },
                         legend: {
                             display: false
+                        },
+                        datalabels: {
+                            display: true,
+                            anchor: 'end',
+                            align: 'start',
+                            color: 'white',
+                            font: {
+                                size: 11,
+                                weight: 'bold',
+                                family: 'Arial'
+                            },
+                            formatter: function(value, context) {
+                                if (isKPI) {
+                                    return value.toFixed(1) + '%';
+                                } else if (isHCRev) {
+                                    return value.toFixed(1);
+                                }
+                                
+                                const absValue = Math.abs(value);
+                                const sign = value >= 0 ? '' : '-';
+                                
+                                if (absValue >= 1000000) {
+                                    return sign + (absValue / 1000000).toFixed(1) + 'MB';
+                                } else if (absValue >= 1000) {
+                                    return sign + (absValue / 1000).toFixed(0) + 'KB';
+                                } else {
+                                    return sign + Math.round(absValue) + 'B';
+                                }
+                            }
                         }
                     },
                     scales: {
@@ -819,7 +976,13 @@
                                 color: 'white'
                             },
                             grid: {
-                                color: 'rgba(255, 255, 255, 0.1)'
+                                color: 'rgba(255, 255, 255, 0.1)',
+                                drawTicks: false,
+                                lineWidth: 1
+                            },
+                            border: {
+                                color: 'rgba(255, 255, 255, 0.3)',
+                                width: 1
                             }
                         },
                         y: {
@@ -835,12 +998,593 @@
                                 }
                             },
                             grid: {
-                                color: 'rgba(255, 255, 255, 0.1)'
+                                color: 'rgba(255, 255, 255, 0.2)',
+                                drawTicks: false,
+                                lineWidth: 1
+                            },
+                            border: {
+                                color: 'white',
+                                width: 1
                             }
                         }
                     }
-                }
+                },
+                plugins: [crosshairPlugin]
             });
+
+            // Prepare sites comparison data (exclude "All WH" and sites with no data or zero values)
+            const sitesData = [];
+            sites.forEach(site => {
+                // Skip "All WH" site
+                if (site === 'All WH') return;
+                
+                let amount;
+                if (isKPI) {
+                    const config = KPI_CONFIGS[selectedItem];
+                    
+                    let numeratorSum = 0;
+                    let denominatorSum = 0;
+
+                    // Get numerator data for this site
+                    if (Array.isArray(config.numerator)) {
+                        numeratorSum = rawData
+                            .filter(row => 
+                                row.Site === site && 
+                                config.numerator.includes(row['Item Detail']) && 
+                                row.Period === selectedPeriod
+                            )
+                            .reduce((sum, row) => sum + (row.Amount || 0), 0);
+                    } else {
+                        numeratorSum = rawData
+                            .filter(row => 
+                                row.Site === site && 
+                                row['Item Detail'] === config.numerator && 
+                                row.Period === selectedPeriod
+                            )
+                            .reduce((sum, row) => sum + (row.Amount || 0), 0);
+                    }
+
+                    // Get denominator data for this site
+                    denominatorSum = rawData
+                        .filter(row => 
+                            row.Site === site && 
+                            row['Item Detail'] === config.denominator && 
+                            row.Period === selectedPeriod
+                        )
+                        .reduce((sum, row) => sum + (row.Amount || 0), 0);
+
+                    amount = denominatorSum > 0 ? (numeratorSum / denominatorSum * 100) : 0;
+                } else {
+                    // For non-KPI items, get the data directly
+                    const siteData = rawData.filter(row => 
+                        row.Site === site && 
+                        row['Item Detail'] === selectedItem && 
+                        row.Period === selectedPeriod
+                    );
+                    amount = siteData.reduce((sum, row) => sum + (row.Amount || 0), 0);
+                }
+                
+                // Skip sites with zero values (but KPIs can be zero as a valid percentage)
+                if (!isKPI && amount === 0) return;
+                
+                sitesData.push({ site: site, amount: amount });
+            });
+
+            // Destroy existing sites chart
+            if (sitesChartInstance) {
+                sitesChartInstance.destroy();
+            }
+
+            // Create sites comparison chart (vertical bars)
+            const sitesCtx = document.getElementById('sitesChart').getContext('2d');
+            
+            // Custom plugin to draw site names above bars
+            const siteNamePlugin = {
+                id: 'siteNameAboveBars',
+                afterDatasetsDraw: (chart) => {
+                    const ctx = chart.ctx;
+                    chart.data.datasets.forEach((dataset, i) => {
+                        const meta = chart.getDatasetMeta(i);
+                        meta.data.forEach((bar, index) => {
+                            const siteName = chart.data.labels[index];
+                            ctx.save();
+                            ctx.textAlign = 'center';
+                            ctx.textBaseline = 'bottom';
+                            ctx.fillStyle = 'white';
+                            ctx.font = 'bold 11px Arial';
+                            ctx.fillText(siteName, bar.x, bar.y - 5);
+                            ctx.restore();
+                        });
+                    });
+                }
+            };
+            
+            sitesChartInstance = new Chart(sitesCtx, {
+                type: 'bar',
+                data: {
+                    labels: sitesData.map(d => d.site),
+                    datasets: [{
+                        label: selectedItem,
+                        data: sitesData.map(d => d.amount),
+                        backgroundColor: sitesData.map(d => d.site === selectedSite ? '#ff9800' : '#27ae60'),
+                        borderColor: 'white',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false
+                    },
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: `${selectedItem} - All Sites Comparison (${(() => {
+                                const dateParts = selectedPeriod.split('-');
+                                if (dateParts.length === 2) {
+                                    const month = parseInt(dateParts[0]);
+                                    const year = dateParts[1];
+                                    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                                    return `${monthNames[month - 1]}-${year}`;
+                                }
+                                return selectedPeriod;
+                            })()})`,
+                            color: '#ff9800',
+                            font: {
+                                size: 16,
+                                family: 'Arial'
+                            }
+                        },
+                        legend: {
+                            display: false
+                        },
+                        datalabels: {
+                            display: true,
+                            anchor: 'center',
+                            align: 'center',
+                            color: 'white',
+                            font: {
+                                size: 11,
+                                weight: 'bold',
+                                family: 'Arial'
+                            },
+                            formatter: function(value, context) {
+                                if (value === null || value === undefined) return '';
+                                
+                                if (isKPI) {
+                                    return value.toFixed(1) + '%';
+                                } else if (isHCRev) {
+                                    return value.toFixed(1);
+                                }
+                                
+                                const absValue = Math.abs(value);
+                                const sign = value >= 0 ? '' : '-';
+                                
+                                if (absValue >= 1000000) {
+                                    return sign + (absValue / 1000000).toFixed(1) + 'MB';
+                                } else if (absValue >= 1000) {
+                                    return sign + (absValue / 1000).toFixed(0) + 'KB';
+                                } else {
+                                    return sign + Math.round(absValue) + 'B';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: {
+                                display: false
+                            },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)',
+                                drawTicks: false,
+                                lineWidth: 1
+                            },
+                            border: {
+                                color: 'rgba(255, 255, 255, 0.3)',
+                                width: 1
+                            }
+                        },
+                        y: {
+                            ticks: {
+                                color: 'white',
+                                callback: function(value) {
+                                    if (isKPI) {
+                                        return value.toFixed(2) + '%';
+                                    } else if (isHCRev) {
+                                        return value.toFixed(2);
+                                    }
+                                    return value.toLocaleString();
+                                }
+                            },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.2)',
+                                drawTicks: false,
+                                lineWidth: 1
+                            },
+                            border: {
+                                color: 'white',
+                                width: 1
+                            }
+                        }
+                    },
+                    layout: {
+                        padding: {
+                            top: 25
+                        }
+                    }
+                },
+                plugins: [siteNamePlugin]
+            });
+
+            // Prepare trend chart data (monthly changes)
+            const trendData = [];
+            if (lineData.length > 0) {
+                // Add first month with no change (no previous month to compare)
+                trendData.push({
+                    date: lineData[0].date,
+                    change: 0,
+                    actualValue: lineData[0].amount,
+                    changePercent: 0,
+                    currentValue: lineData[0].amount,
+                    previousValue: lineData[0].amount
+                });
+                
+                // Add remaining months with calculated changes
+                for (let i = 1; i < lineData.length; i++) {
+                    const currentValue = lineData[i].amount;
+                    const previousValue = lineData[i - 1].amount;
+                    const change = currentValue - previousValue;
+                    const changePercent = previousValue !== 0 ? (change / previousValue * 100) : 0;
+                    
+                    trendData.push({
+                        date: lineData[i].date,
+                        change: change,
+                        actualValue: currentValue, // Use actual value (can be positive or negative)
+                        changePercent: changePercent,
+                        currentValue: currentValue,
+                        previousValue: previousValue
+                    });
+                }
+            }
+
+            // Destroy existing trend chart
+            if (trendChartInstance) {
+                trendChartInstance.destroy();
+            }
+
+            // Calculate dynamic width based on number of data points
+            // Allocate 60px per data point for comfortable spacing
+            const minWidth = 800; // Minimum width
+            const widthPerPoint = 60;
+            const calculatedWidth = Math.max(minWidth, trendData.length * widthPerPoint);
+            
+            // Set the wrapper width
+            const trendWrapper = document.getElementById('trendChartWrapper');
+            trendWrapper.style.width = calculatedWidth + 'px';
+
+            // Create trend chart with Chart.js
+            const trendCtx = document.getElementById('trendChart').getContext('2d');
+            
+            // Use the same Y-axis range as monthly line chart
+            let suggestedMin = 0;
+            let suggestedMax = 10;
+            
+            if (lineChartInstance && lineChartInstance.scales && lineChartInstance.scales.y) {
+                // Get the actual min/max from the monthly line chart
+                suggestedMin = lineChartInstance.scales.y.min;
+                suggestedMax = lineChartInstance.scales.y.max;
+            } else if (lineData.length > 0) {
+                // Fallback: calculate from line data
+                const lineYMin = Math.min(...lineData.map(d => d.amount), 0);
+                const lineYMax = Math.max(...lineData.map(d => d.amount), 0);
+                const lineYRange = lineYMax - lineYMin;
+                const lineYPadding = lineYRange * 0.1;
+                suggestedMin = lineYMin - lineYPadding;
+                suggestedMax = lineYMax + lineYPadding;
+            } else {
+                // Last fallback: use trend data
+                const trendYValues = trendData.map(d => d.actualValue);
+                if (trendYValues.length > 0) {
+                    const trendYMin = Math.min(...trendYValues, 0);
+                    const trendYMax = Math.max(...trendYValues, 0);
+                    const trendYRange = trendYMax - trendYMin;
+                    const trendYPadding = trendYRange * 0.1;
+                    suggestedMin = trendYMin - trendYPadding;
+                    suggestedMax = trendYMax + trendYPadding;
+                }
+            }
+            
+            trendChartInstance = new Chart(trendCtx, {
+                type: 'line',
+                data: {
+                    labels: trendData.map(d => d.date.toLocaleDateString()),
+                    datasets: [{
+                        label: 'Actual Value',
+                        data: trendData.map(d => d.actualValue),
+                        borderColor: '#4472C4',
+                        backgroundColor: 'transparent',
+                        borderWidth: 3,
+                        tension: 0,
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
+                        pointBackgroundColor: '#4472C4',
+                        pointBorderColor: '#4472C4',
+                        pointHoverBackgroundColor: '#4472C4',
+                        pointBorderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    layout: {
+                        padding: {
+                            top: 30,
+                            bottom: 10,
+                            left: 10,
+                            right: 10
+                        }
+                    },
+                    interaction: {
+                        mode: 'index',
+                        intersect: false
+                    },
+                    plugins: {
+                        title: {
+                            display: false
+                        },
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            enabled: true,
+                            displayColors: false,
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            padding: 12,
+                            titleFont: {
+                                size: 12,
+                                weight: 'bold'
+                            },
+                            bodyFont: {
+                                size: 11
+                            },
+                            footerFont: {
+                                size: 10,
+                                style: 'italic'
+                            },
+                            callbacks: {
+                                title: function(context) {
+                                    const dataPoint = trendData[context[0].dataIndex];
+                                    const month = dataPoint.date.toLocaleString('en-US', { month: 'short' });
+                                    const year = dataPoint.date.getFullYear();
+                                    return `${month}-${year}`;
+                                },
+                                label: function(context) {
+                                    return null; // We'll use afterLabel for all content
+                                },
+                                afterLabel: function(context) {
+                                    const dataPoint = trendData[context.dataIndex];
+                                    const currentValue = dataPoint.currentValue;
+                                    const change = dataPoint.change;
+                                    const changePercent = dataPoint.changePercent;
+                                    
+                                    const lines = [];
+                                    
+                                    // Value line
+                                    if (isKPI) {
+                                        lines.push(`Value: ${currentValue.toFixed(2)}%`);
+                                    } else {
+                                        const absValue = Math.abs(currentValue);
+                                        const sign = currentValue >= 0 ? '' : '-';
+                                        if (absValue >= 1000000) {
+                                            lines.push(`Value: ${sign}${(absValue / 1000000).toFixed(1)}MB`);
+                                        } else if (absValue >= 1000) {
+                                            lines.push(`Value: ${sign}${(absValue / 1000).toFixed(1)}KB`);
+                                        } else {
+                                            lines.push(`Value: ${sign}${Math.round(absValue)}THB`);
+                                        }
+                                    }
+                                    
+                                    // Monthly Change line
+                                    const changeSign = change >= 0 ? '+' : '';
+                                    if (isKPI) {
+                                        lines.push(`Monthly Change: ${changeSign}${change.toFixed(2)}%`);
+                                    } else {
+                                        const absChange = Math.abs(change);
+                                        if (absChange >= 1000000) {
+                                            lines.push(`Monthly Change: ${changeSign}${(change / 1000000).toFixed(1)}MB`);
+                                        } else if (absChange >= 1000) {
+                                            lines.push(`Monthly Change: ${changeSign}${(change / 1000).toFixed(1)}KB`);
+                                        } else {
+                                            lines.push(`Monthly Change: ${changeSign}${Math.round(change)}THB`);
+                                        }
+                                    }
+                                    
+                                    // Percentage line
+                                    const percentSign = changePercent >= 0 ? '+' : '';
+                                    lines.push(`Percentage: ${percentSign}${changePercent.toFixed(1)}%`);
+                                    
+                                    return lines;
+                                },
+                                footer: function(context) {
+                                    return 'Double click for other viewpoints';
+                                }
+                            }
+                        },
+                        datalabels: {
+                            display: true,
+                            align: function(context) {
+                                const dataPoint = trendData[context.dataIndex];
+                                return dataPoint.change >= 0 ? 'top' : 'bottom';
+                            },
+                            anchor: function(context) {
+                                const dataPoint = trendData[context.dataIndex];
+                                return dataPoint.change >= 0 ? 'end' : 'start';
+                            },
+                            offset: 10,
+                            clamp: false,
+                            color: function(context) {
+                                const dataPoint = trendData[context.dataIndex];
+                                
+                                // In Value mode, color based on actual value (blue for positive, red for negative)
+                                if (trendLabelMode === 'value') {
+                                    return dataPoint.currentValue >= 0 ? '#4472C4' : '#e74c3c';
+                                }
+                                // In other modes (change and percentage), color based on monthly change
+                                else {
+                                    return dataPoint.change >= 0 ? '#27ae60' : '#e74c3c';
+                                }
+                            },
+                            font: {
+                                size: 11,
+                                weight: 'bold',
+                                family: 'Arial'
+                            },
+                            formatter: function(value, context) {
+                                const dataPoint = trendData[context.dataIndex];
+                                const change = dataPoint.change;
+                                const currentValue = dataPoint.currentValue;
+                                const changePercent = dataPoint.changePercent;
+                                
+                                if (change === null || change === undefined) return '';
+                                
+                                // Mode 1: change (monthly change in currency) - DEFAULT
+                                if (trendLabelMode === 'change') {
+                                    const sign = change >= 0 ? '+' : '';
+                                    
+                                    if (isKPI) {
+                                        return sign + change.toFixed(2) + '%';
+                                    }
+                                    
+                                    const absChange = Math.abs(change);
+                                    
+                                    if (absChange >= 1000000) {
+                                        const changeInM = change / 1000000;
+                                        return sign + changeInM.toFixed(1) + 'MB';
+                                    } else if (absChange >= 1000) {
+                                        const changeInK = change / 1000;
+                                        return sign + changeInK.toFixed(1) + 'KB';
+                                    } else {
+                                        return sign + Math.round(change) + 'THB';
+                                    }
+                                }
+                                
+                                // Mode 2: percentage (percentage change)
+                                else if (trendLabelMode === 'percentage') {
+                                    const percentSign = changePercent >= 0 ? '+' : '';
+                                    return percentSign + changePercent.toFixed(1) + '%';
+                                }
+                                
+                                // Mode 3: value (absolute current value)
+                                else if (trendLabelMode === 'value') {
+                                    if (isKPI) {
+                                        const sign = currentValue >= 0 ? '' : '';
+                                        return sign + currentValue.toFixed(2) + '%';
+                                    }
+                                    
+                                    const absValue = Math.abs(currentValue);
+                                    const sign = currentValue >= 0 ? '' : '-';
+                                    
+                                    if (absValue >= 1000000) {
+                                        return sign + (absValue / 1000000).toFixed(1) + 'MB';
+                                    } else if (absValue >= 1000) {
+                                        return sign + (absValue / 1000).toFixed(1) + 'KB';
+                                    } else {
+                                        return sign + Math.round(absValue) + 'THB';
+                                    }
+                                }
+                            },
+                            listeners: {
+                                enter: function(context) {
+                                    context.hovered = true;
+                                    return true;
+                                },
+                                leave: function(context) {
+                                    context.hovered = false;
+                                    return true;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: {
+                                color: 'white',
+                                maxRotation: 90,
+                                minRotation: 90,
+                                font: {
+                                    size: 10,
+                                    family: 'Arial'
+                                },
+                                callback: function(value, index) {
+                                    const date = trendData[index].date;
+                                    const month = date.toLocaleString('en-US', { month: 'short' });
+                                    const year = date.getFullYear();
+                                    return `${month}-${year}`;
+                                },
+                                autoSkip: false
+                            },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)',
+                                drawTicks: false,
+                                lineWidth: 1
+                            },
+                            border: {
+                                color: 'white',
+                                width: 1
+                            }
+                        },
+                        y: {
+                            min: suggestedMin,
+                            max: suggestedMax,
+                            ticks: {
+                                display: true,
+                                color: 'white',
+                                font: {
+                                    size: 11,
+                                    family: 'Arial'
+                                },
+                                callback: function(value) {
+                                    if (isKPI) {
+                                        return value.toFixed(2) + '%';
+                                    } else if (isHCRev) {
+                                        return value.toFixed(2);
+                                    }
+                                    return value.toLocaleString();
+                                }
+                            },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.2)',
+                                drawTicks: false,
+                                lineWidth: 1
+                            },
+                            border: {
+                                color: 'white',
+                                width: 1
+                            }
+                        }
+                    }
+                },
+                plugins: [crosshairPlugin]
+            });
+
+            // Add double-click handler to cycle through label modes
+            const trendCanvas = document.getElementById('trendChart');
+            trendCanvas.ondblclick = function() {
+                // Cycle through modes: value -> change -> percentage -> value
+                if (trendLabelMode === 'value') {
+                    trendLabelMode = 'change';
+                } else if (trendLabelMode === 'change') {
+                    trendLabelMode = 'percentage';
+                } else {
+                    trendLabelMode = 'value';
+                }
+                
+                // Update the chart
+                trendChartInstance.update();
+            };
         }
 
         function calculateKPIData(siteData, kpiName) {
@@ -920,112 +1664,6 @@
 
             return result.sort((a, b) => a.year - b.year);
         }
-
-        function updateTable() {
-            const tableContainer = document.getElementById('dataTable');
-            
-            // Get all periods sorted
-            const allPeriods = [...new Set(rawData.map(row => row.Period))].sort();
-            const siteData = rawData.filter(row => row.Site === selectedSite);
-
-            if (allPeriods.length === 0) {
-                tableContainer.innerHTML = '<div class="no-data-message">No data available</div>';
-                return;
-            }
-
-            // Build table
-            let tableHTML = '<table class="data-table"><thead><tr>';
-            tableHTML += '<th class="table-header">Period</th>';
-            
-            allPeriods.forEach(period => {
-                tableHTML += `<th class="table-header">${period}</th>`;
-            });
-            tableHTML += '<th class="table-header">Change</th>';
-            tableHTML += '</tr></thead><tbody>';
-
-            // Get ordered items
-            const orderedItems = getOrderedItems();
-
-            orderedItems.forEach(item => {
-                tableHTML += '<tr>';
-                tableHTML += `<td class="table-cell-label">${item}</td>`;
-
-                const amounts = [];
-                allPeriods.forEach(period => {
-                    const isKPI = KPI_CONFIGS.hasOwnProperty(item);
-                    let amount;
-
-                    if (isKPI) {
-                        const config = KPI_CONFIGS[item];
-                        const periodData = siteData.filter(row => row.Period === period);
-
-                        let numeratorSum = 0;
-                        let denominatorSum = 0;
-
-                        if (Array.isArray(config.numerator)) {
-                            numeratorSum = periodData
-                                .filter(row => config.numerator.includes(row['Item Detail']))
-                                .reduce((sum, row) => sum + (row.Amount || 0), 0);
-                        } else {
-                            numeratorSum = periodData
-                                .filter(row => row['Item Detail'] === config.numerator)
-                                .reduce((sum, row) => sum + (row.Amount || 0), 0);
-                        }
-
-                        denominatorSum = periodData
-                            .filter(row => row['Item Detail'] === config.denominator)
-                            .reduce((sum, row) => sum + (row.Amount || 0), 0);
-
-                        amount = denominatorSum > 0 ? (numeratorSum / denominatorSum * 100) : 0;
-                    } else {
-                        amount = siteData
-                            .filter(row => row['Item Detail'] === item && row.Period === period)
-                            .reduce((sum, row) => sum + (row.Amount || 0), 0);
-                    }
-
-                    amounts.push(amount);
-                    const displayValue = isKPI ? `${amount.toFixed(2)}%` : formatNumber(amount);
-                    tableHTML += `<td class="table-cell-amount">${displayValue}</td>`;
-                });
-
-                // Calculate change
-                const firstAmount = amounts[0] || 0;
-                const lastAmount = amounts[amounts.length - 1] || 0;
-                const change = lastAmount - firstAmount;
-                const changeClass = change >= 0 ? 'positive' : 'negative';
-                const changeSymbol = change >= 0 ? '+' : '';
-                tableHTML += `<td class="table-cell-diff ${changeClass}">${changeSymbol}${formatNumber(change)}</td>`;
-
-                tableHTML += '</tr>';
-            });
-
-            tableHTML += '</tbody></table>';
-            tableContainer.innerHTML = tableHTML;
-        }
-
-        function getOrderedItems() {
-            const ordered = [];
-            for (const [category, categoryItems] of Object.entries(PL_CATEGORIES)) {
-                categoryItems.forEach(item => {
-                    if (items.includes(item)) {
-                        ordered.push(item);
-                    }
-                });
-            }
-
-            const allCategorized = Object.values(PL_CATEGORIES).flat();
-            items.forEach(item => {
-                if (!allCategorized.includes(item)) {
-                    ordered.push(item);
-                }
-            });
-
-            return ordered;
-        }
-
-        // Initialize with sample message
-        document.getElementById('dataTable').innerHTML = 
-            '<div class="no-data-message">Loading initial data...</div>';
 
         // Auto-load embedded data on page load
         window.addEventListener('DOMContentLoaded', function() {
