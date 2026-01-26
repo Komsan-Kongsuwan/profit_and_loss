@@ -1145,7 +1145,17 @@
                     const currentValue = lineData[i].amount;
                     const previousValue = lineData[i - 1].amount;
                     const change = currentValue - previousValue;
-                    const changePercent = previousValue !== 0 ? (change / previousValue * 100) : 0;
+                    
+                    // For KPI items (already in percentage format), don't multiply by 100
+                    // For regular items, multiply by 100 to convert to percentage
+                    let changePercent;
+                    if (isKPI && !isRevPerHead) {
+                        // KPI values are already percentages, so just calculate the relative change
+                        changePercent = previousValue !== 0 ? (change / previousValue) : 0;
+                    } else {
+                        // Regular items: calculate percentage change normally
+                        changePercent = previousValue !== 0 ? (change / previousValue * 100) : 0;
+                    }
                     
                     // For KPI items, skip if the current value is zero
                     if (isKPI && currentValue === 0) continue;
@@ -1315,7 +1325,12 @@
                                     
                                     // Percentage line
                                     const percentSign = changePercent >= 0 ? '+' : '';
-                                    lines.push(`Percentage: ${percentSign}${changePercent.toFixed(1)}%`);
+                                    // For KPI items, changePercent is already calculated without *100, so multiply here
+                                    if (isKPI && !isRevPerHead) {
+                                        lines.push(`Percentage: ${percentSign}${(changePercent * 100).toFixed(1)}%`);
+                                    } else {
+                                        lines.push(`Percentage: ${percentSign}${changePercent.toFixed(1)}%`);
+                                    }
                                     
                                     return lines;
                                 },
@@ -1389,7 +1404,12 @@
                                 // Mode 2: percentage (percentage change)
                                 else if (trendLabelMode === 'percentage') {
                                     const percentSign = changePercent >= 0 ? '+' : '';
-                                    return percentSign + changePercent.toFixed(1) + '%';
+                                    // For KPI items, changePercent is already calculated without *100, so multiply here
+                                    if (isKPI && !isRevPerHead) {
+                                        return percentSign + (changePercent * 100).toFixed(1) + '%';
+                                    } else {
+                                        return percentSign + changePercent.toFixed(1) + '%';
+                                    }
                                 }
                                 
                                 // Mode 3: value (absolute current value)
