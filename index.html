@@ -587,9 +587,9 @@
 
             const metrics = {
                 "Revenue Total": 0,
-                "Variable Cost": 0,
+                "Variable Cost Total": 0,
                 "Marginal Profit": 0,
-                "Fix Cost": 0,
+                "Fixed Cost Total": 0,
                 "Gross Profit": 0,
                 "Expense Total": 0,
                 "Operating Profit": 0
@@ -622,9 +622,9 @@
 
             // Update metric values
             document.getElementById('revenueTotalMetric').textContent = formatNumber(metrics["Revenue Total"]);
-            document.getElementById('variableCostMetric').textContent = formatNumber(metrics["Variable Cost"]);
+            document.getElementById('variableCostMetric').textContent = formatNumber(metrics["Variable Cost Total"]);
             document.getElementById('marginalProfitMetric').textContent = formatNumber(metrics["Marginal Profit"]);
-            document.getElementById('fixCostMetric').textContent = formatNumber(metrics["Fix Cost"]);
+            document.getElementById('fixCostMetric').textContent = formatNumber(metrics["Fixed Cost Total"]);
             document.getElementById('grossProfitMetric').textContent = formatNumber(metrics["Gross Profit"]);
             document.getElementById('expenseTotalMetric').textContent = formatNumber(metrics["Expense Total"]);
             document.getElementById('operationProfitMetric').textContent = formatNumber(metrics["Operating Profit"]);
