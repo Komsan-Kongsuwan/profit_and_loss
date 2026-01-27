@@ -482,35 +482,75 @@
             const itemContainer = document.getElementById('sidebarItems');
             itemContainer.innerHTML = '';
             
-            for (const [category, categoryItems] of Object.entries(PL_CATEGORIES)) {
-                const availableItems = categoryItems.filter(item => items.includes(item));
-                
-                if (availableItems.length > 0) {
-                    const section = document.createElement('div');
-                    section.className = 'category-section';
+            // Define category display order: P&L Statement first, then KPI
+            const categoryOrder = ['P&L Statement', 'KPI'];
+            
+            categoryOrder.forEach(category => {
+                if (PL_CATEGORIES[category]) {
+                    const availableItems = PL_CATEGORIES[category].filter(item => items.includes(item));
                     
-                    const header = document.createElement('h6');
-                    header.className = 'category-header';
-                    header.textContent = category;
-                    section.appendChild(header);
-                    
-                    const itemsDiv = document.createElement('div');
-                    itemsDiv.className = 'category-items';
-                    
-                    availableItems.forEach(item => {
-                        const link = document.createElement('div');
-                        link.className = 'sidebar-link' + (item === selectedItem ? ' active' : '');
-                        link.textContent = item;
-                        link.addEventListener('click', () => {
-                            selectedItem = item;
-                            updateDashboard();
-                            updateActiveLinks();
+                    if (availableItems.length > 0) {
+                        const section = document.createElement('div');
+                        section.className = 'category-section';
+                        
+                        const header = document.createElement('h6');
+                        header.className = 'category-header';
+                        header.textContent = category;
+                        section.appendChild(header);
+                        
+                        const itemsDiv = document.createElement('div');
+                        itemsDiv.className = 'category-items';
+                        
+                        availableItems.forEach(item => {
+                            const link = document.createElement('div');
+                            link.className = 'sidebar-link' + (item === selectedItem ? ' active' : '');
+                            link.textContent = item;
+                            link.addEventListener('click', () => {
+                                selectedItem = item;
+                                updateDashboard();
+                                updateActiveLinks();
+                            });
+                            itemsDiv.appendChild(link);
                         });
-                        itemsDiv.appendChild(link);
-                    });
+                        
+                        section.appendChild(itemsDiv);
+                        itemContainer.appendChild(section);
+                    }
+                }
+            });
+            
+            // Add any other categories not in the order list
+            for (const [category, categoryItems] of Object.entries(PL_CATEGORIES)) {
+                if (!categoryOrder.includes(category)) {
+                    const availableItems = categoryItems.filter(item => items.includes(item));
                     
-                    section.appendChild(itemsDiv);
-                    itemContainer.appendChild(section);
+                    if (availableItems.length > 0) {
+                        const section = document.createElement('div');
+                        section.className = 'category-section';
+                        
+                        const header = document.createElement('h6');
+                        header.className = 'category-header';
+                        header.textContent = category;
+                        section.appendChild(header);
+                        
+                        const itemsDiv = document.createElement('div');
+                        itemsDiv.className = 'category-items';
+                        
+                        availableItems.forEach(item => {
+                            const link = document.createElement('div');
+                            link.className = 'sidebar-link' + (item === selectedItem ? ' active' : '');
+                            link.textContent = item;
+                            link.addEventListener('click', () => {
+                                selectedItem = item;
+                                updateDashboard();
+                                updateActiveLinks();
+                            });
+                            itemsDiv.appendChild(link);
+                        });
+                        
+                        section.appendChild(itemsDiv);
+                        itemContainer.appendChild(section);
+                    }
                 }
             }
 
@@ -597,7 +637,7 @@
 
         function formatNumber(num) {
             if (num === null || num === undefined || isNaN(num)) return '-';
-            return num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            return Math.round(num).toLocaleString('en-US');
         }
 
         function calculateMetrics() {
