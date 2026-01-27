@@ -1349,6 +1349,10 @@
                                     return lines;
                                 },
                                 footer: function(context) {
+                                    // Hide instruction for KPI items
+                                    if (isKPI) {
+                                        return '';
+                                    }
                                     return 'Double click for other viewpoints';
                                 }
                             }
@@ -1518,6 +1522,11 @@
             // Add double-click handler to cycle through label modes
             const trendCanvas = document.getElementById('trendChart');
             trendCanvas.ondblclick = function() {
+                // Disable double-click for KPI items
+                if (isKPI) {
+                    return; // Do nothing for KPI items
+                }
+                
                 // Cycle through modes: value -> change -> percentage -> value
                 if (trendLabelMode === 'value') {
                     trendLabelMode = 'change';
