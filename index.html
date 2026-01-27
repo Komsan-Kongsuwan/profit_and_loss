@@ -684,6 +684,13 @@
             const isRevPerHead = selectedItem === "Revenue per Head"; // Display as currency
             const isNumStaff = selectedItem === "Number of staff"; // Display as plain number
             const isFixedCostEff = selectedItem === "Fixed Cost Efficiency"; // Display as currency
+            
+            // KPIs stored as small decimals (0.0-1.0 range) that need *100 to display as percentage
+            const isSmallDecimalKPI = selectedItem === "Direct Material Ratio" || 
+                                      selectedItem === "Outsource Labor Ratio";
+            
+            // KPIs that should NOT be multiplied by 100 (already in percentage format or currency)
+            const isRegularKPI = isKPI && !isRevPerHead && !isFixedCostEff && !isSmallDecimalKPI;
 
             // Prepare line chart data
             // All items including KPIs are now directly in the data
@@ -759,8 +766,10 @@
                                 family: 'Arial'
                             },
                             formatter: function(value, context) {
-                                if (isKPI && !isRevPerHead) {
+                                if (isRegularKPI) {
                                     return value.toFixed(1) + '%';
+                                } else if (isSmallDecimalKPI) {
+                                    return (value * 100).toFixed(1) + '%';
                                 } else if (isNumStaff) {
                                     return Math.round(value);
                                 }
@@ -805,7 +814,9 @@
                             ticks: {
                                 color: 'white',
                                 callback: function(value) {
-                                    if (isKPI && !isRevPerHead) {
+                                    if (isRegularKPI) {
+                                        return value.toFixed(2) + '%';
+                                    } else if (isSmallDecimalKPI) {
                                         return (value * 100).toFixed(2) + '%';
                                     } else if (isNumStaff) {
                                         return Math.round(value);
@@ -892,8 +903,10 @@
                                 family: 'Arial'
                             },
                             formatter: function(value, context) {
-                                if (isKPI && !isRevPerHead) {
+                                if (isRegularKPI) {
                                     return value.toFixed(1) + '%';
+                                } else if (isSmallDecimalKPI) {
+                                    return (value * 100).toFixed(1) + '%';
                                 } else if (isNumStaff) {
                                     return Math.round(value);
                                 }
@@ -930,7 +943,9 @@
                             ticks: {
                                 color: 'white',
                                 callback: function(value) {
-                                    if (isKPI && !isRevPerHead) {
+                                    if (isRegularKPI) {
+                                        return value.toFixed(2) + '%';
+                                    } else if (isSmallDecimalKPI) {
                                         return (value * 100).toFixed(2) + '%';
                                     } else if (isNumStaff) {
                                         return Math.round(value);
@@ -1056,8 +1071,10 @@
                             formatter: function(value, context) {
                                 if (value === null || value === undefined) return '';
                                 
-                                if (isKPI && !isRevPerHead) {
+                                if (isRegularKPI) {
                                     return value.toFixed(1) + '%';
+                                } else if (isSmallDecimalKPI) {
+                                    return (value * 100).toFixed(1) + '%';
                                 } else if (isNumStaff) {
                                     return Math.round(value);
                                 }
@@ -1094,7 +1111,9 @@
                             ticks: {
                                 color: 'white',
                                 callback: function(value) {
-                                    if (isKPI && !isRevPerHead) {
+                                    if (isRegularKPI) {
+                                        return value.toFixed(2) + '%';
+                                    } else if (isSmallDecimalKPI) {
                                         return (value * 100).toFixed(2) + '%';
                                     } else if (isNumStaff) {
                                         return Math.round(value);
@@ -1146,11 +1165,11 @@
                     const previousValue = lineData[i - 1].amount;
                     const change = currentValue - previousValue;
                     
-                    // For KPI items (already in percentage format), don't multiply by 100
-                    // For regular items, multiply by 100 to convert to percentage
+                    // Calculate percentage change based on KPI type
                     let changePercent;
-                    if (isKPI && !isRevPerHead) {
-                        // KPI values are already percentages, so just calculate the relative change
+                    if (isRegularKPI || isSmallDecimalKPI) {
+                        // For both types of KPIs, calculate percentage change without *100
+                        // (will be multiplied by 100 during display for proper formatting)
                         changePercent = previousValue !== 0 ? (change / previousValue) : 0;
                     } else {
                         // Regular items: calculate percentage change normally
@@ -1294,7 +1313,9 @@
                                     const lines = [];
                                     
                                     // Value line
-                                    if (isKPI && !isRevPerHead) {
+                                    if (isRegularKPI) {
+                                        lines.push(`Value: ${currentValue.toFixed(2)}%`);
+                                    } else if (isSmallDecimalKPI) {
                                         lines.push(`Value: ${(currentValue * 100).toFixed(2)}%`);
                                     } else {
                                         const absValue = Math.abs(currentValue);
@@ -1310,8 +1331,10 @@
                                     
                                     // Monthly Change line
                                     const changeSign = change >= 0 ? '+' : '';
-                                    if (isKPI && !isRevPerHead) {
-                                        lines.push(`Monthly Change: ${changeSign}${(change * 100).toFixed(2)}%`);
+                                    if (isRegularKPI) {
+                                        lines.push(`Monthly Change: ${changeSign}${change.toFixed(2)}% points`);
+                                    } else if (isSmallDecimalKPI) {
+                                        lines.push(`Monthly Change: ${changeSign}${(change * 100).toFixed(2)}% points`);
                                     } else {
                                         const absChange = Math.abs(change);
                                         if (absChange >= 1000000) {
@@ -1326,7 +1349,7 @@
                                     // Percentage line
                                     const percentSign = changePercent >= 0 ? '+' : '';
                                     // For KPI items, changePercent is already calculated without *100, so multiply here
-                                    if (isKPI && !isRevPerHead) {
+                                    if (isRegularKPI || isSmallDecimalKPI) {
                                         lines.push(`Percentage: ${percentSign}${(changePercent * 100).toFixed(1)}%`);
                                     } else {
                                         lines.push(`Percentage: ${percentSign}${changePercent.toFixed(1)}%`);
@@ -1335,10 +1358,6 @@
                                     return lines;
                                 },
                                 footer: function(context) {
-                                    // Hide double-click instruction for all KPI items including REV/HC
-                                    if (isKPI || isRevPerHead) {
-                                        return ''; // No instruction for KPI items and REV/HC
-                                    }
                                     return 'Double click for other viewpoints';
                                 }
                             }
@@ -1384,8 +1403,10 @@
                                 if (trendLabelMode === 'change') {
                                     const sign = change >= 0 ? '+' : '';
                                     
-                                    if (isKPI && !isRevPerHead) {
-                                        return sign + (change * 100).toFixed(2) + '%';
+                                    if (isRegularKPI) {
+                                        return sign + change.toFixed(2) + '% pts';
+                                    } else if (isSmallDecimalKPI) {
+                                        return sign + (change * 100).toFixed(2) + '% pts';
                                     }
                                     
                                     const absChange = Math.abs(change);
@@ -1405,7 +1426,7 @@
                                 else if (trendLabelMode === 'percentage') {
                                     const percentSign = changePercent >= 0 ? '+' : '';
                                     // For KPI items, changePercent is already calculated without *100, so multiply here
-                                    if (isKPI && !isRevPerHead) {
+                                    if (isRegularKPI || isSmallDecimalKPI) {
                                         return percentSign + (changePercent * 100).toFixed(1) + '%';
                                     } else {
                                         return percentSign + changePercent.toFixed(1) + '%';
@@ -1414,7 +1435,10 @@
                                 
                                 // Mode 3: value (absolute current value)
                                 else if (trendLabelMode === 'value') {
-                                    if (isKPI && !isRevPerHead) {
+                                    if (isRegularKPI) {
+                                        const sign = currentValue >= 0 ? '' : '';
+                                        return sign + currentValue.toFixed(2) + '%';
+                                    } else if (isSmallDecimalKPI) {
                                         const sign = currentValue >= 0 ? '' : '';
                                         return sign + (currentValue * 100).toFixed(2) + '%';
                                     }
@@ -1482,7 +1506,9 @@
                                     family: 'Arial'
                                 },
                                 callback: function(value) {
-                                    if (isKPI && !isRevPerHead) {
+                                    if (isRegularKPI) {
+                                        return value.toFixed(2) + '%';
+                                    } else if (isSmallDecimalKPI) {
                                         return (value * 100).toFixed(2) + '%';
                                     } else if (isNumStaff) {
                                         return Math.round(value);
@@ -1508,11 +1534,6 @@
             // Add double-click handler to cycle through label modes
             const trendCanvas = document.getElementById('trendChart');
             trendCanvas.ondblclick = function() {
-                // Disable double-click for all KPI items including REV/HC
-                if (isKPI || isRevPerHead) {
-                    return; // Do nothing for KPI items and REV/HC
-                }
-                
                 // Cycle through modes: value -> change -> percentage -> value
                 if (trendLabelMode === 'value') {
                     trendLabelMode = 'change';
