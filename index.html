@@ -38,7 +38,7 @@
         }
         
         .sidebar-header { 
-            font-size: 13px; 
+            font-size: 15px; 
             font-weight: bold; 
             color: #ff9800; 
             margin: 5px 10px; 
@@ -49,7 +49,7 @@
         }
         
         .category-header { 
-            font-size: 11px; 
+            font-size: 13px; 
             font-weight: bold; 
             color: #ffc107; 
             margin: 8px 10px 4px 10px; 
@@ -66,7 +66,7 @@
             display: block; 
             padding: 4px 8px; 
             cursor: pointer; 
-            font-size: 11px; 
+            font-size: 13px; 
             color: #e9ecef; 
             border-radius: 3px; 
             margin: 1px 0;
@@ -117,7 +117,7 @@
         }
         
         .title {
-            font-size: 24px;
+            font-size: 28px;
             margin-top: 15px;
             margin-bottom: 20px;
             color: #ff9800;
@@ -163,7 +163,7 @@
         .trend-chart-title {
             text-align: center;
             color: #ff9800;
-            font-size: 16px;
+            font-size: 18px;
             font-weight: normal;
             margin: 0 0 10px 0;
             padding: 5px 0;
@@ -185,21 +185,21 @@
         }
         
         .card-title { 
-            font-size: 14px; 
+            font-size: 16px; 
             color: #9eb3c2; 
             margin-bottom: 5px;
             display: block;
         }
         
         .card-date {
-            font-size: 12px;
+            font-size: 14px;
             color: #ff9800;
             margin-bottom: 8px;
             display: block;
         }
         
         .metric { 
-            font-size: 20px; 
+            font-size: 24px; 
             font-weight: bold; 
             margin-top: 5px; 
         }
@@ -218,7 +218,7 @@
             color: white;
             border-radius: 4px;
             cursor: pointer;
-            font-size: 11px;
+            font-size: 13px;
             font-weight: bold;
             transition: background-color 0.2s ease;
             text-align: center;
@@ -236,7 +236,7 @@
             display: block;
             margin-top: 5px;
             color: #9eb3c2;
-            font-size: 10px;
+            font-size: 11px;
             text-align: center;
         }
     </style>
@@ -435,7 +435,17 @@
             // Extract unique values
             sites = [...new Set(rawData.map(row => row.Site).filter(s => s))].sort();
             items = [...new Set(rawData.map(row => row['Item Detail']).filter(i => i))];
-            periods = [...new Set(rawData.map(row => row.Period).filter(p => p))];
+            
+            // Sort periods from newest to oldest (descending)
+            periods = [...new Set(rawData.map(row => row.Period).filter(p => p))].sort((a, b) => {
+                // Parse period strings (format: "M-YYYY" like "1-2020")
+                const [monthA, yearA] = a.split('-').map(Number);
+                const [monthB, yearB] = b.split('-').map(Number);
+                
+                // Compare year first, then month (descending order)
+                if (yearB !== yearA) return yearB - yearA;
+                return monthB - monthA;
+            });
 
             // Set initial selections
             selectedSite = sites[0] || null;
@@ -746,7 +756,7 @@
                             text: `${selectedSite} - ${selectedItem} by Month`,
                             color: '#ff9800',
                             font: {
-                                size: 16,
+                                size: 18,
                                 family: 'Arial'
                             }
                         },
@@ -768,13 +778,13 @@
                             offset: 5,
                             color: 'white',
                             font: {
-                                size: 10,
+                                size: 14,
                                 weight: 'bold',
                                 family: 'Arial'
                             },
                             formatter: function(value, context) {
                                 if (isRegularKPI) {
-                                    return value.toFixed(1) + '%';
+                                    return value.toFixed(0) + '%';
                                 } else if (isNumStaff) {
                                     return Math.round(value);
                                 }
@@ -783,7 +793,7 @@
                                 const sign = value >= 0 ? '' : '-';
                                 
                                 if (absValue >= 1000000) {
-                                    return sign + (absValue / 1000000).toFixed(1) + 'MB';
+                                    return sign + (absValue / 1000000).toFixed(0) + 'MB';
                                 } else if (absValue >= 1000) {
                                     return sign + (absValue / 1000).toFixed(0) + 'KB';
                                 } else {
@@ -820,7 +830,7 @@
                                 color: 'white',
                                 callback: function(value) {
                                     if (isRegularKPI) {
-                                        return value.toFixed(2) + '%';
+                                        return value.toFixed(0) + '%';
                                     } else if (isNumStaff) {
                                         return Math.round(value);
                                     }
@@ -888,7 +898,7 @@
                             text: `${selectedSite} - ${selectedItem} by Year`,
                             color: '#ff9800',
                             font: {
-                                size: 16,
+                                size: 18,
                                 family: 'Arial'
                             }
                         },
@@ -901,13 +911,13 @@
                             align: 'start',
                             color: 'white',
                             font: {
-                                size: 11,
+                                size: 13,
                                 weight: 'bold',
                                 family: 'Arial'
                             },
                             formatter: function(value, context) {
                                 if (isRegularKPI) {
-                                    return value.toFixed(1) + '%';
+                                    return value.toFixed(0) + '%';
                                 } else if (isNumStaff) {
                                     return Math.round(value);
                                 }
@@ -916,7 +926,7 @@
                                 const sign = value >= 0 ? '' : '-';
                                 
                                 if (absValue >= 1000000) {
-                                    return sign + (absValue / 1000000).toFixed(1) + 'MB';
+                                    return sign + (absValue / 1000000).toFixed(0) + 'MB';
                                 } else if (absValue >= 1000) {
                                     return sign + (absValue / 1000).toFixed(0) + 'KB';
                                 } else {
@@ -945,7 +955,7 @@
                                 color: 'white',
                                 callback: function(value) {
                                     if (isRegularKPI) {
-                                        return value.toFixed(2) + '%';
+                                        return value.toFixed(0) + '%';
                                     } else if (isNumStaff) {
                                         return Math.round(value);
                                     }
@@ -1050,7 +1060,7 @@
                             })()})`,
                             color: '#ff9800',
                             font: {
-                                size: 16,
+                                size: 18,
                                 family: 'Arial'
                             }
                         },
@@ -1063,7 +1073,7 @@
                             align: 'center',
                             color: 'white',
                             font: {
-                                size: 11,
+                                size: 13,
                                 weight: 'bold',
                                 family: 'Arial'
                             },
@@ -1071,7 +1081,7 @@
                                 if (value === null || value === undefined) return '';
                                 
                                 if (isRegularKPI) {
-                                    return value.toFixed(1) + '%';
+                                    return value.toFixed(0) + '%';
                                 } else if (isNumStaff) {
                                     return Math.round(value);
                                 }
@@ -1080,7 +1090,7 @@
                                 const sign = value >= 0 ? '' : '-';
                                 
                                 if (absValue >= 1000000) {
-                                    return sign + (absValue / 1000000).toFixed(1) + 'MB';
+                                    return sign + (absValue / 1000000).toFixed(0) + 'MB';
                                 } else if (absValue >= 1000) {
                                     return sign + (absValue / 1000).toFixed(0) + 'KB';
                                 } else {
@@ -1109,7 +1119,7 @@
                                 color: 'white',
                                 callback: function(value) {
                                     if (isRegularKPI) {
-                                        return value.toFixed(2) + '%';
+                                        return value.toFixed(0) + '%';
                                     } else if (isNumStaff) {
                                         return Math.round(value);
                                     }
@@ -1279,14 +1289,14 @@
                             backgroundColor: 'rgba(0, 0, 0, 0.8)',
                             padding: 12,
                             titleFont: {
-                                size: 12,
+                                size: 14,
                                 weight: 'bold'
                             },
                             bodyFont: {
                                 size: 11
                             },
                             footerFont: {
-                                size: 10,
+                                size: 14,
                                 style: 'italic'
                             },
                             callbacks: {
@@ -1309,14 +1319,16 @@
                                     
                                     // Value line
                                     if (isRegularKPI) {
-                                        lines.push(`Value: ${currentValue.toFixed(2)}%`);
+                                        lines.push(`Value: ${currentValue.toFixed(0)}%`);
+                                    } else if (isNumStaff) {
+                                        lines.push(`Value: ${Math.round(currentValue)}`);
                                     } else {
                                         const absValue = Math.abs(currentValue);
                                         const sign = currentValue >= 0 ? '' : '-';
                                         if (absValue >= 1000000) {
-                                            lines.push(`Value: ${sign}${(absValue / 1000000).toFixed(1)}MB`);
+                                            lines.push(`Value: ${sign}${(absValue / 1000000).toFixed(0)}MB`);
                                         } else if (absValue >= 1000) {
-                                            lines.push(`Value: ${sign}${(absValue / 1000).toFixed(1)}KB`);
+                                            lines.push(`Value: ${sign}${(absValue / 1000).toFixed(0)}KB`);
                                         } else {
                                             lines.push(`Value: ${sign}${Math.round(absValue)}THB`);
                                         }
@@ -1325,13 +1337,15 @@
                                     // Monthly Change line
                                     const changeSign = change >= 0 ? '+' : '';
                                     if (isRegularKPI) {
-                                        lines.push(`Monthly Change: ${changeSign}${change.toFixed(2)}% points`);
+                                        lines.push(`Monthly Change: ${changeSign}${change.toFixed(0)}% points`);
+                                    } else if (isNumStaff) {
+                                        lines.push(`Monthly Change: ${changeSign}${Math.round(change)}`);
                                     } else {
                                         const absChange = Math.abs(change);
                                         if (absChange >= 1000000) {
-                                            lines.push(`Monthly Change: ${changeSign}${(change / 1000000).toFixed(1)}MB`);
+                                            lines.push(`Monthly Change: ${changeSign}${(change / 1000000).toFixed(0)}MB`);
                                         } else if (absChange >= 1000) {
-                                            lines.push(`Monthly Change: ${changeSign}${(change / 1000).toFixed(1)}KB`);
+                                            lines.push(`Monthly Change: ${changeSign}${(change / 1000).toFixed(0)}KB`);
                                         } else {
                                             lines.push(`Monthly Change: ${changeSign}${Math.round(change)}THB`);
                                         }
@@ -1341,9 +1355,9 @@
                                     const percentSign = changePercent >= 0 ? '+' : '';
                                     // For KPI items, changePercent is already calculated without *100, so multiply here
                                     if (isRegularKPI) {
-                                        lines.push(`Percentage: ${percentSign}${(changePercent * 100).toFixed(1)}%`);
+                                        lines.push(`Percentage: ${percentSign}${(changePercent * 100).toFixed(0)}%`);
                                     } else {
-                                        lines.push(`Percentage: ${percentSign}${changePercent.toFixed(1)}%`);
+                                        lines.push(`Percentage: ${percentSign}${changePercent.toFixed(0)}%`);
                                     }
                                     
                                     return lines;
@@ -1382,7 +1396,7 @@
                                 }
                             },
                             font: {
-                                size: 11,
+                                size: 13,
                                 weight: 'bold',
                                 family: 'Arial'
                             },
@@ -1399,17 +1413,19 @@
                                     const sign = change >= 0 ? '+' : '';
                                     
                                     if (isRegularKPI) {
-                                        return sign + change.toFixed(2) + '% pts';
+                                        return sign + change.toFixed(0) + '% pts';
+                                    } else if (isNumStaff) {
+                                        return sign + Math.round(change);
                                     }
                                     
                                     const absChange = Math.abs(change);
                                     
                                     if (absChange >= 1000000) {
                                         const changeInM = change / 1000000;
-                                        return sign + changeInM.toFixed(1) + 'MB';
+                                        return sign + changeInM.toFixed(0) + 'MB';
                                     } else if (absChange >= 1000) {
                                         const changeInK = change / 1000;
-                                        return sign + changeInK.toFixed(1) + 'KB';
+                                        return sign + changeInK.toFixed(0) + 'KB';
                                     } else {
                                         return sign + Math.round(change) + 'THB';
                                     }
@@ -1420,9 +1436,9 @@
                                     const percentSign = changePercent >= 0 ? '+' : '';
                                     // For KPI items, changePercent is already calculated without *100, so multiply here
                                     if (isRegularKPI) {
-                                        return percentSign + (changePercent * 100).toFixed(1) + '%';
+                                        return percentSign + (changePercent * 100).toFixed(0) + '%';
                                     } else {
-                                        return percentSign + changePercent.toFixed(1) + '%';
+                                        return percentSign + changePercent.toFixed(0) + '%';
                                     }
                                 }
                                 
@@ -1430,16 +1446,18 @@
                                 else if (trendLabelMode === 'value') {
                                     if (isRegularKPI) {
                                         const sign = currentValue >= 0 ? '' : '';
-                                        return sign + currentValue.toFixed(2) + '%';
+                                        return sign + currentValue.toFixed(0) + '%';
+                                    } else if (isNumStaff) {
+                                        return Math.round(currentValue);
                                     }
                                     
                                     const absValue = Math.abs(currentValue);
                                     const sign = currentValue >= 0 ? '' : '-';
                                     
                                     if (absValue >= 1000000) {
-                                        return sign + (absValue / 1000000).toFixed(1) + 'MB';
+                                        return sign + (absValue / 1000000).toFixed(0) + 'MB';
                                     } else if (absValue >= 1000) {
-                                        return sign + (absValue / 1000).toFixed(1) + 'KB';
+                                        return sign + (absValue / 1000).toFixed(0) + 'KB';
                                     } else {
                                         return sign + Math.round(absValue) + 'THB';
                                     }
@@ -1464,7 +1482,7 @@
                                 maxRotation: 90,
                                 minRotation: 90,
                                 font: {
-                                    size: 10,
+                                    size: 14,
                                     family: 'Arial'
                                 },
                                 callback: function(value, index) {
@@ -1492,12 +1510,12 @@
                                 display: true,
                                 color: 'white',
                                 font: {
-                                    size: 11,
+                                    size: 13,
                                     family: 'Arial'
                                 },
                                 callback: function(value) {
                                     if (isRegularKPI) {
-                                        return value.toFixed(2) + '%';
+                                        return value.toFixed(0) + '%';
                                     } else if (isNumStaff) {
                                         return Math.round(value);
                                     }
