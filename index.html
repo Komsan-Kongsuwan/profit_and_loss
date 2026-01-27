@@ -12,19 +12,22 @@
             margin: 0; 
             font-family: Arial, sans-serif; 
             background-color: #0d1b2a; 
-            color: white; 
+            color: white;
+            overflow: hidden;
         }
         
         .layout { 
             display: flex; 
-            height: 100vh; 
+            height: 100vh;
+            overflow: hidden;
         }
         
         .sidebar { 
             background: #1b263b; 
             padding: 15px 5px; 
             width: 280px; 
-            overflow-y: hidden;
+            overflow-y: auto;
+            overflow-x: hidden;
             transition: width 0.3s ease;
             display: flex;
             flex-direction: column;
@@ -49,6 +52,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-shrink: 0;
         }
         
         .sidebar-header:hover {
@@ -68,6 +72,7 @@
             overflow-y: auto;
             transition: max-height 0.3s ease, opacity 0.3s ease;
             opacity: 1;
+            min-height: 0;
         }
         
         .sidebar-content.collapsed {
@@ -77,7 +82,8 @@
         }
         
         .sidebar-content.sites {
-            max-height: 200px;
+            flex: 0 1 auto;
+            max-height: 25vh;
         }
         
         .sidebar-content.items {
@@ -87,7 +93,8 @@
         }
         
         .sidebar-content.periods {
-            max-height: 300px;
+            flex: 0 1 auto;
+            max-height: 25vh;
         }
         
         .category-section { 
@@ -283,6 +290,7 @@
             padding: 10px;
             background: #2c3e50;
             border-radius: 5px;
+            flex-shrink: 0;
         }
 
         .file-upload-label {
@@ -313,6 +321,13 @@
             font-size: 11px;
             text-align: center;
         }
+        
+        .sidebar-hr {
+            margin: 8px 0;
+            border: 0;
+            border-top: 1px solid #495057;
+            flex-shrink: 0;
+        }
     </style>
 </head>
 <body>
@@ -326,7 +341,7 @@
                 <div class="file-name" id="fileName">Loading embedded data...</div>
             </div>
             
-            <hr style="margin: 8px 0;">
+            <hr class="sidebar-hr">
             
             <h5 class="sidebar-header" id="sitesHeader">
                 <span>Sites</span>
@@ -334,7 +349,7 @@
             </h5>
             <div id="sidebarSites" class="sidebar-content sites"></div>
             
-            <hr style="margin: 8px 0;">
+            <hr class="sidebar-hr">
             
             <h5 class="sidebar-header" id="itemsHeader">
                 <span>Item Details</span>
@@ -342,7 +357,7 @@
             </h5>
             <div id="sidebarItems" class="sidebar-content items"></div>
             
-            <hr style="margin: 8px 0;">
+            <hr class="sidebar-hr">
             
             <h5 class="sidebar-header" id="periodsHeader">
                 <span>Months</span>
