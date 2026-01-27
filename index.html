@@ -53,13 +53,41 @@
             font-weight: bold; 
             color: #ffc107; 
             margin: 8px 10px 4px 10px; 
-            padding: 2px 0;
+            padding: 6px 8px;
             border-bottom: 1px solid #495057;
             text-transform: uppercase;
+            cursor: pointer;
+            border-radius: 3px;
+            transition: background-color 0.2s ease;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .category-header:hover {
+            background-color: rgba(255, 193, 7, 0.1);
+        }
+        
+        .category-toggle {
+            font-size: 10px;
+            transition: transform 0.3s ease;
+        }
+        
+        .category-toggle.collapsed {
+            transform: rotate(-90deg);
         }
         
         .category-items { 
-            margin-left: 8px; 
+            margin-left: 8px;
+            overflow: hidden;
+            transition: max-height 0.3s ease, opacity 0.3s ease;
+            max-height: 2000px;
+            opacity: 1;
+        }
+        
+        .category-items.collapsed {
+            max-height: 0;
+            opacity: 0;
         }
         
         .sidebar-link { 
@@ -495,7 +523,16 @@
                         
                         const header = document.createElement('h6');
                         header.className = 'category-header';
-                        header.textContent = category;
+                        
+                        const headerText = document.createElement('span');
+                        headerText.textContent = category;
+                        
+                        const toggleIcon = document.createElement('span');
+                        toggleIcon.className = 'category-toggle';
+                        toggleIcon.textContent = '▼';
+                        
+                        header.appendChild(headerText);
+                        header.appendChild(toggleIcon);
                         section.appendChild(header);
                         
                         const itemsDiv = document.createElement('div');
@@ -511,6 +548,12 @@
                                 updateActiveLinks();
                             });
                             itemsDiv.appendChild(link);
+                        });
+                        
+                        // Add click handler to toggle category
+                        header.addEventListener('click', () => {
+                            itemsDiv.classList.toggle('collapsed');
+                            toggleIcon.classList.toggle('collapsed');
                         });
                         
                         section.appendChild(itemsDiv);
@@ -530,7 +573,16 @@
                         
                         const header = document.createElement('h6');
                         header.className = 'category-header';
-                        header.textContent = category;
+                        
+                        const headerText = document.createElement('span');
+                        headerText.textContent = category;
+                        
+                        const toggleIcon = document.createElement('span');
+                        toggleIcon.className = 'category-toggle';
+                        toggleIcon.textContent = '▼';
+                        
+                        header.appendChild(headerText);
+                        header.appendChild(toggleIcon);
                         section.appendChild(header);
                         
                         const itemsDiv = document.createElement('div');
@@ -546,6 +598,12 @@
                                 updateActiveLinks();
                             });
                             itemsDiv.appendChild(link);
+                        });
+                        
+                        // Add click handler to toggle category
+                        header.addEventListener('click', () => {
+                            itemsDiv.classList.toggle('collapsed');
+                            toggleIcon.classList.toggle('collapsed');
                         });
                         
                         section.appendChild(itemsDiv);
