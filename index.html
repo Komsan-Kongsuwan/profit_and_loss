@@ -41,7 +41,53 @@
             font-size: 15px; 
             font-weight: bold; 
             color: #ff9800; 
-            margin: 5px 10px; 
+            margin: 5px 10px;
+            padding: 6px 8px;
+            cursor: pointer;
+            border-radius: 3px;
+            transition: background-color 0.2s ease;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .sidebar-header:hover {
+            background-color: rgba(255, 152, 0, 0.1);
+        }
+        
+        .sidebar-toggle {
+            font-size: 10px;
+            transition: transform 0.3s ease;
+        }
+        
+        .sidebar-toggle.collapsed {
+            transform: rotate(-90deg);
+        }
+        
+        .sidebar-content {
+            overflow-y: auto;
+            transition: max-height 0.3s ease, opacity 0.3s ease;
+            opacity: 1;
+        }
+        
+        .sidebar-content.collapsed {
+            max-height: 0 !important;
+            opacity: 0;
+            overflow: hidden;
+        }
+        
+        .sidebar-content.sites {
+            max-height: 200px;
+        }
+        
+        .sidebar-content.items {
+            flex: 1 1 auto;
+            min-height: 0;
+            max-height: none;
+        }
+        
+        .sidebar-content.periods {
+            max-height: 300px;
         }
         
         .category-section { 
@@ -282,18 +328,27 @@
             
             <hr style="margin: 8px 0;">
             
-            <h5 class="sidebar-header">Sites</h5>
-            <div id="sidebarSites" style="overflow-y: auto; margin-top: 10px; flex: 0 0 15vh;"></div>
+            <h5 class="sidebar-header" id="sitesHeader">
+                <span>Sites</span>
+                <span class="sidebar-toggle">▼</span>
+            </h5>
+            <div id="sidebarSites" class="sidebar-content sites"></div>
             
             <hr style="margin: 8px 0;">
             
-            <h5 class="sidebar-header">Item Details</h5>
-            <div id="sidebarItems" style="overflow-y: auto; flex: 1 1 auto; min-height: 0;"></div>
+            <h5 class="sidebar-header" id="itemsHeader">
+                <span>Item Details</span>
+                <span class="sidebar-toggle">▼</span>
+            </h5>
+            <div id="sidebarItems" class="sidebar-content items"></div>
             
             <hr style="margin: 8px 0;">
             
-            <h5 class="sidebar-header">Months</h5>
-            <div id="sidebarPeriods" style="overflow-y: auto; flex: 0 0 15vh;"></div>
+            <h5 class="sidebar-header" id="periodsHeader">
+                <span>Months</span>
+                <span class="sidebar-toggle">▼</span>
+            </h5>
+            <div id="sidebarPeriods" class="sidebar-content periods"></div>
         </div>
         
         <div class="content">
@@ -396,6 +451,23 @@
                 toggleBtn.textContent = 'HIDE';
             }
         });
+
+        // Setup collapsible section handlers
+        function setupSectionToggle(headerId, contentId) {
+            const header = document.getElementById(headerId);
+            const content = document.getElementById(contentId);
+            const toggleIcon = header.querySelector('.sidebar-toggle');
+            
+            header.addEventListener('click', function() {
+                content.classList.toggle('collapsed');
+                toggleIcon.classList.toggle('collapsed');
+            });
+        }
+        
+        // Initialize section toggles
+        setupSectionToggle('sitesHeader', 'sidebarSites');
+        setupSectionToggle('itemsHeader', 'sidebarItems');
+        setupSectionToggle('periodsHeader', 'sidebarPeriods');
 
         // File upload handler
         document.getElementById('fileInput').addEventListener('change', function(e) {
